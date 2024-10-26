@@ -1,8 +1,11 @@
 body {
     font-family: Arial, sans-serif;
-    max-width: 1200px;
+    max-width: 100%;
     margin: 0 auto;
-    padding: 20px;
+    padding: 10px;
+    box-sizing: border-box;
+    background-color: #121212;
+    color: #e0e0e0;
 }
 
 button {
@@ -10,69 +13,94 @@ button {
     margin: 5px;
     border: none;
     border-radius: 4px;
-    background: #007bff;
+    background: #2196F3;
     color: white;
     cursor: pointer;
+    font-size: 16px;
+    width: auto;
+    min-height: 44px;
 }
 
 button:disabled {
-    background: #cccccc;
+    background: #1e1e1e;
+    color: #666;
     cursor: not-allowed;
 }
 
 .error-message {
-    color: #dc3545;
+    color: #ff6b6b;
     margin: 10px 0;
     padding: 10px;
     border-radius: 4px;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
+    background-color: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.3);
     display: none;
 }
 
 .image-container {
-    margin: 20px 0;
+    margin: 15px 0;
+    width: 100%;
 }
 
 .image-container img {
     max-width: 100%;
-    max-height: 400px;
+    height: auto;
+    max-height: 300px;
     border-radius: 8px;
+    object-fit: contain;
 }
 
 .question-info {
-    margin: 20px 0;
-    padding: 15px;
-    background: #e9ecef;
+    margin: 15px 0;
+    padding: 12px;
+    background: #1e1e1e;
     border-radius: 8px;
 }
 
 .game-progress {
-    font-size: 1.2em;
-    color: #666;
-    margin-bottom: 15px;
+    font-size: 1.1em;
+    color: #bbbbbb;
+    margin-bottom: 12px;
 }
 
 .question-text {
-    font-size: 1.5em;
-    margin: 20px 0;
+    font-size: 1.2em;
+    margin: 15px 0;
     font-weight: bold;
+    line-height: 1.4;
+    color: #ffffff;
 }
 
 #results {
-    margin-top: 20px;
-    padding: 20px;
-    background: #f5f5f5;
+    margin-top: 15px;
+    padding: 15px;
+    background: #1e1e1e;
     border-radius: 8px;
 }
 
 .level-indicator {
-    margin: 10px 0;
+    margin: 8px 0;
     font-weight: bold;
+    color: #2196F3;
 }
 
 #score {
-    font-size: 1.2em;
+    font-size: 1.1em;
     font-weight: bold;
-    margin: 20px 0;
+    margin: 15px 0;
+    color: #4CAF50;
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 8px;
+    }
+
+    .question-text {
+        font-size: 1.1em;
+    }
+
+    .game-progress {
+        font-size: 1em;
+    }
 }
