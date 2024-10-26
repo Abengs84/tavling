@@ -1,25 +1,95 @@
 body {
     text-align: center;
     max-width: 100%;
-    padding: 0 10px;
+    padding: 0;
+}
+
+/* New colored header */
+.game-header {
+    background: linear-gradient(135deg, #1976D2, #2196F3);
+    padding: 15px 0;
+    position: relative;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    width: 100%;
+}
+
+/* Repositioned score */
+#score {
+    position: absolute;
+    top: 0px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    color: white;
+}
+
+.game-progress {
+    color: white;
+    font-weight: 500;
+    padding: 0 20px;
+}
+
+/* Level indicator with stars and points */
+.level-indicator {
+    position: fixed;
+    bottom: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 100;
+}
+
+.stars-container {
+    color: #FFD700;
+    background: #2196F3;
+    font-size: 16px;
+    border-radius: 8px;
+    width: 66px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    letter-spacing: 1px;
+    transform: translateY(12px);
+}
+
+.points-indicator {
+    width: 84px;
+    height: 69px;
+    background: #2196F3;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    font-weight: bold;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 #loginScreen, #welcomeScreen, #gameScreen {
-    margin: 20px auto;
-    max-width: 100%;
-    padding: 10px;
+    /* max-width: 800px; */
+    padding: 20px;
     display: none;
 }
 
 #loginScreen {
     display: block;
+    padding-top: 40px;
+}
+
+#gameScreen {
+    padding: 0;
 }
 
 .welcome-message {
     background: #1e1e1e;
     padding: 20px;
     border-radius: 10px;
-    margin: 15px 0;
+    margin: 15px auto;
+    max-width: 600px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
@@ -53,6 +123,7 @@ body {
     margin: 15px auto;
     width: 100%;
     max-width: 400px;
+    box-sizing: border-box;
 }
 
 @media (min-width: 481px) {
@@ -64,7 +135,7 @@ body {
 .choice-button {
     padding: 15px;
     border: none;
-    border-radius: 4px;
+    border-radius: 24px;
     background: #2196F3;
     color: white;
     cursor: pointer;
@@ -84,7 +155,9 @@ body {
     background: #1e1e1e;
     color: #666;
 }
-
+button {
+    margin: 0;
+}
 input[type="text"] {
     padding: 12px;
     margin: 10px;
@@ -111,9 +184,26 @@ input[type="text"]:focus {
     word-wrap: break-word;
 }
 
+.question-text {
+    margin: 20px auto;
+    max-width: 600px;
+}
+
+.image-container {
+    margin: 15px auto;
+    max-width: 600px;
+}
+
+.image-container img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
 @media (max-width: 480px) {
     .welcome-message {
         padding: 15px;
+        margin: 15px;
     }
 
     .welcome-message h2 {
@@ -127,5 +217,10 @@ input[type="text"]:focus {
     input[type="text"] {
         font-size: 16px;
         padding: 10px;
+    }
+
+    #score {
+        font-size: 0.9em;
+        padding: 6px 12px;
     }
 }

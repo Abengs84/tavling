@@ -6,6 +6,9 @@ let sessionId = '';
 let currentQuestionIndex = -1;
 let submittedAnswer = null;
 
+const POINTS_PER_LEVEL = [10, 8, 6, 4];
+const STARS_PER_LEVEL = ['★★★★', '★★★', '★★', '★'];
+
 // Check for existing session
 window.onload = function() {
     const savedSession = localStorage.getItem('quizSession');
@@ -14,6 +17,13 @@ window.onload = function() {
         socket.emit('reconnect-player', sessionData);
     }
 };
+
+function updateLevelIndicator(level) {
+    const pointsIndicator = document.getElementById('pointsIndicator');
+    const starsContainer = document.getElementById('starsContainer');
+    pointsIndicator.textContent = POINTS_PER_LEVEL[level];
+    starsContainer.textContent = STARS_PER_LEVEL[level];
+}
 
 function updateChoicesDisplay(choices, hasAnswered, submittedAnswer) {
     const choicesContainer = document.getElementById('choices');
@@ -119,7 +129,7 @@ socket.on('game-state', (state) => {
     document.getElementById('score').textContent = `Score: ${totalScore}`;
     showGameScreen();
     
-    document.getElementById('currentLevel').textContent = state.currentLevel + 1;
+    updateLevelIndicator(state.currentLevel);
     document.getElementById('questionImage').src = state.image;
     document.getElementById('questionText').textContent = state.questionText;
     document.getElementById('gameProgress').textContent = 
@@ -158,7 +168,7 @@ socket.on('new-question', (data) => {
     submittedAnswer = data.answer || null;
     
     showGameScreen();
-    document.getElementById('currentLevel').textContent = '1';
+    updateLevelIndicator(0); // Start at level 1 (index 0)
     document.getElementById('questionImage').src = data.image;
     document.getElementById('questionText').textContent = data.questionText;
     document.getElementById('results').innerHTML = '';
@@ -169,7 +179,7 @@ socket.on('new-question', (data) => {
 });
 
 socket.on('show-level', (data) => {
-    document.getElementById('currentLevel').textContent = (data.level + 1).toString();
+    updateLevelIndicator(data.level);
     document.getElementById('questionImage').src = data.image;
 });
 

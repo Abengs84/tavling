@@ -29,9 +29,10 @@
     </div>
 
     <div id="gameScreen">
-        <div class="game-progress" id="gameProgress"></div>
-        <div class="level-indicator">Level: <span id="currentLevel">1</span>/4</div>
-        <div id="score">Score: 0</div>
+        <div class="game-header">
+            <div class="game-progress" id="gameProgress"></div>
+            <div id="score">Score: 0</div>
+        </div>
         <div class="question-text" id="questionText"></div>
         <div class="image-container">
             <img id="questionImage" src="" alt="Question Image">
@@ -40,6 +41,12 @@
             <!-- Choices will be added here dynamically -->
         </div>
         <div id="results"></div>
+        <div class="level-indicator">
+            <div class="stars-container" id="starsContainer">
+                ★★★★
+            </div>
+            <div class="points-indicator" id="pointsIndicator">10</div>
+        </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
