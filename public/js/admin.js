@@ -9,6 +9,10 @@ socket.emit('admin-connect');
 socket.on('admin-connected', () => {
     console.log('Connected as admin');
     enableOnlyStartGame();
+    // Hide the image element completely
+    const imageElement = document.getElementById('currentImage');
+    imageElement.style.display = 'none';
+    imageElement.src = '';
 });
 
 function enableOnlyStartGame() {
@@ -27,7 +31,9 @@ socket.on('new-question', (data) => {
         <div class="question-text">${data.questionText}</div>
         <div>Choices: ${data.choices.join(', ')}</div>
     `;
-    document.getElementById('currentImage').src = data.image;
+    const imageElement = document.getElementById('currentImage');
+    imageElement.style.display = 'block';
+    imageElement.src = data.image;
     document.getElementById('answersList').innerHTML = '';
     playerAnswers.clear();
     currentLevel = 0;
@@ -114,6 +120,10 @@ socket.on('game-over', (players) => {
     `;
     enableOnlyStartGame();
     document.getElementById('nextQuestion').textContent = 'Next Question';
+    // Hide the image element completely when game is over
+    const imageElement = document.getElementById('currentImage');
+    imageElement.style.display = 'none';
+    imageElement.src = '';
 });
 
 document.getElementById('startGame').addEventListener('click', () => {
