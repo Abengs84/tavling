@@ -1,0 +1,13 @@
+{
+  "name": "quiz-game",
+  "version": "1.0.0",
+  "description": "Interactive quiz game with admin control",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "socket.io": "^4.5.1"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "questions": [
+    {
+      "id": 1,
+      "question": "What is this famous landmark?",
+      "images": [
+        "/images/q1/level1.jpg",
+        "/images/q1/level2.jpg",
+        "/images/q1/level3.jpg",
+        "/images/q1/level4.jpg"
+      ],
+      "choices": [
+        "Eiffel Tower",
+        "Statue of Liberty",
+        "Big Ben",
+        "Tower Bridge"
+      ],
+      "correctAnswer": "Eiffel Tower"
+    },
+    {
+      "id": 2,
+      "question": "Who is this famous person?",
+      "images": [
+        "/images/q2/level1.jpg",
+        "/images/q2/level2.jpg",
+        "/images/q2/level3.jpg",
+        "/images/q2/level4.jpg"
+      ],
+      "choices": [
+        "Albert Einstein",
+        "Isaac Newton",
+        "Nikola Tesla",
+        "Thomas Edison"
+      ],
+      "correctAnswer": "Albert Einstein"
+    }
+  ]
+}

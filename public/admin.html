@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quiz Admin</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .control-panel {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .player-list {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        #playersList, #answersList {
+            list-style: none;
+            padding: 0;
+        }
+        #playersList li, #answersList li {
+            padding: 5px;
+            margin: 5px 0;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .current-image {
+            max-width: 100%;
+            margin: 20px 0;
+        }
+        .question-info {
+            margin: 20px 0;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 8px;
+        }
+        .question-text {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .game-progress {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        .results-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            display: none;
+        }
+        .correct-answer {
+            color: #28a745;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        .player-result {
+            margin: 5px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+        }
+        .player-result.correct {
+            border-left: 4px solid #28a745;
+        }
+        .player-result.incorrect {
+            border-left: 4px solid #dc3545;
+        }
+        .points-info {
+            color: #666;
+            font-style: italic;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="control-panel">
+        <h2>Game Controls</h2>
+        <div class="question-info">
+            <div class="game-progress" id="gameProgress"></div>
+            <div id="questionDetails"></div>
+        </div>
+        <button id="startGame">Start Game</button>
+        <button id="nextLevel" disabled>Show Next Level</button>
+        <button id="revealAnswer" disabled>Reveal Answer</button>
+        <button id="nextQuestion" disabled>Next Question</button>
+        
+        <div class="current-image">
+            <img id="currentImage" src="" alt="Current Question Image" style="max-width: 400px;">
+        </div>
+
+        <div class="results-panel" id="resultsPanel">
+            <div class="correct-answer" id="correctAnswer"></div>
+            <div id="playerResults"></div>
+            <div class="points-info">
+                Points System:<br>
+                Level 1: 10 points<br>
+                Level 2: 8 points<br>
+                Level 3: 6 points<br>
+                Level 4: 4 points
+            </div>
+        </div>
+    </div>
+
+    <div class="player-list">
+        <h2>Connected Players</h2>
+        <ul id="playersList"></ul>
+    </div>
+
+    <div class="player-list">
+        <h2>Submitted Answers</h2>
+        <ul id="answersList"></ul>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let currentLevel = 0;
+        let gameStarted = false;
+        let answerRevealed = false;
+
+        socket.emit('admin-connect');
+
+        socket.on('admin-connected', () => {
+            console.log('Connected as admin');
+            enableOnlyStartGame();
+        });
+
+        socket.on('restore-game-state', (state) => {
+            gameStarted = true;
+            currentLevel = state.currentLevel;
+            
+            document.getElementById('gameProgress').textContent = 
+                `Question ${state.questionNumber} of ${state.totalQuestions}`;
+            document.getElementById('questionDetails').innerHTML = `
+                <div class="question-text">${state.questionText}</div>
+                <div>Choices: ${state.choices.join(', ')}</div>
+            `;
+            document.getElementById('currentImage').src = state.image;
+
+            document.getElementById('playersList').innerHTML = '';
+            state.players.forEach(player => {
+                const li = document.createElement('li');
+                li.textContent = `${player.name} (Score: ${player.score})`;
+                document.getElementById('playersList').appendChild(li);
+            });
+
+            document.getElementById('answersList').innerHTML = '';
+            state.answers.forEach(([_, answer]) => {
+                const li = document.createElement('li');
+                li.textContent = `${answer.playerName} answered at level ${answer.level + 1}`;
+                document.getElementById('answersList').appendChild(li);
+            });
+
+            document.getElementById('startGame').disabled = true;
+            document.getElementById('nextLevel').disabled = false;
+            document.getElementById('revealAnswer').disabled = false;
+            document.getElementById('nextQuestion').disabled = true;
+        });
+
+        function enableOnlyStartGame() {
+            document.getElementById('startGame').disabled = false;
+            document.getElementById('nextLevel').disabled = true;
+            document.getElementById('revealAnswer').disabled = true;
+            document.getElementById('nextQuestion').disabled = true;
+            document.getElementById('resultsPanel').style.display = 'none';
+        }
+
+        function updatePlayersList(players) {
+            const playersList = document.getElementById('playersList');
+            playersList.innerHTML = '';
+            players.forEach(player => {
+                const li = document.createElement('li');
+                li.textContent = `${player.name} (Score: ${player.score})`;
+                playersList.appendChild(li);
+            });
+        }
+
+        socket.on('new-question', (data) => {
+            document.getElementById('gameProgress').textContent = 
+                `Question ${data.questionNumber} of ${data.totalQuestions}`;
+            document.getElementById('questionDetails').innerHTML = `
+                <div class="question-text">${data.questionText}</div>
+                <div>Choices: ${data.choices.join(', ')}</div>
+            `;
+            document.getElementById('currentImage').src = data.image;
+            document.getElementById('answersList').innerHTML = '';
+            document.getElementById('resultsPanel').style.display = 'none';
+            currentLevel = 0;
+            answerRevealed = false;
+            
+            document.getElementById('startGame').disabled = true;
+            document.getElementById('nextLevel').disabled = false;
+            document.getElementById('revealAnswer').disabled = false;
+            document.getElementById('nextQuestion').disabled = true;
+        });
+
+        socket.on('player-joined', (player) => {
+            const existingLi = document.getElementById(`player-${player.id}`);
+            if (!existingLi) {
+                const li = document.createElement('li');
+                li.id = `player-${player.id}`;
+                li.textContent = player.name;
+                document.getElementById('playersList').appendChild(li);
+            }
+        });
+
+        socket.on('player-left', (player) => {
+            const li = document.getElementById(`player-${player.id}`);
+            if (li) li.remove();
+        });
+
+        socket.on('player-answered', (data) => {
+            const li = document.createElement('li');
+            li.textContent = `${data.playerName} answered at level ${data.level + 1}`;
+            document.getElementById('answersList').appendChild(li);
+        });
+
+        socket.on('answer-revealed', (data) => {
+            answerRevealed = true;
+            document.getElementById('nextLevel').disabled = true;
+            document.getElementById('revealAnswer').disabled = true;
+            document.getElementById('nextQuestion').disabled = false;
+            
+            const resultsPanel = document.getElementById('resultsPanel');
+            resultsPanel.style.display = 'block';
+            
+            document.getElementById('correctAnswer').textContent = `Correct Answer: ${data.correctAnswer}`;
+            
+            const playerResults = document.getElementById('playerResults');
+            playerResults.innerHTML = '';
+            
+            data.results.forEach(result => {
+                const resultDiv = document.createElement('div');
+                resultDiv.className = `player-result ${result.correct ? 'correct' : 'incorrect'}`;
+                resultDiv.innerHTML = `
+                    <strong>${result.playerName}</strong><br>
+                    Answer: ${result.answer}<br>
+                    Level: ${result.answeredAtLevel}<br>
+                    Points this round: ${result.points}<br>
+                    Total score: ${result.totalScore}
+                `;
+                playerResults.appendChild(resultDiv);
+            });
+            
+            if (data.isLastQuestion) {
+                document.getElementById('nextQuestion').textContent = 'End Game';
+            }
+
+            // Update player scores in the players list
+            const players = Array.from(document.getElementById('playerResults').children).map(div => ({
+                name: div.querySelector('strong').textContent,
+                score: parseInt(div.textContent.match(/Total score: (\d+)/)[1])
+            }));
+            updatePlayersList(players);
+        });
+
+        socket.on('game-over', (players) => {
+            const sortedPlayers = players.sort((a, b) => b.score - a.score);
+            document.getElementById('questionDetails').innerHTML = `
+                <h2>Game Over - Final Scores</h2>
+                ${sortedPlayers.map((p, i) => `
+                    <div>${i + 1}. ${p.name}: ${p.score} points</div>
+                `).join('')}
+            `;
+            enableOnlyStartGame();
+            document.getElementById('nextQuestion').textContent = 'Next Question';
+        });
+
+        document.getElementById('startGame').addEventListener('click', () => {
+            socket.emit('start-game');
+            gameStarted = true;
+        });
+
+        document.getElementById('nextLevel').addEventListener('click', () => {
+            if (currentLevel < 3 && !answerRevealed) {
+                currentLevel++;
+                socket.emit('next-level');
+                const currentSrc = document.getElementById('currentImage').src;
+                const nextImageNumber = currentLevel + 1;
+                document.getElementById('currentImage').src = currentSrc.replace(/level\d\.jpg/, `level${nextImageNumber}.jpg`);
+                
+                if (currentLevel === 3) {
+                    document.getElementById('nextLevel').disabled = true;
+                }
+            }
+        });
+
+        document.getElementById('revealAnswer').addEventListener('click', () => {
+            socket.emit('reveal-answer');
+        });
+
+        document.getElementById('nextQuestion').addEventListener('click', () => {
+            if (document.getElementById('nextQuestion').textContent === 'End Game') {
+                socket.emit('next-question');
+                document.getElementById('nextQuestion').disabled = true;
+                document.getElementById('nextQuestion').textContent = 'Next Question';
+            } else {
+                socket.emit('next-question');
+                document.getElementById('nextQuestion').disabled = true;
+            }
+        });
+    </script>
+</body>
+</html>
