@@ -7,7 +7,6 @@ body {
 /* New colored header */
 .game-header {
     background: linear-gradient(135deg, #1976D2, #2196F3);
-    padding: 15px 0;
     position: relative;
     margin-bottom: 20px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
@@ -17,11 +16,8 @@ body {
 /* Repositioned score */
 #score {
     position: absolute;
-    top: 0px;
+    top: -7px;
     right: 20px;
-    background: rgba(255, 255, 255, 0.1);
-    padding: 8px 15px;
-    border-radius: 20px;
     font-weight: bold;
     color: white;
 }
@@ -29,7 +25,7 @@ body {
 .game-progress {
     color: white;
     font-weight: 500;
-    padding: 0 20px;
+    padding: 8px 0;
 }
 
 /* Level indicator with stars and points */
@@ -69,8 +65,40 @@ body {
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
+/* Image container and results positioning */
+.image-container {
+    margin: 15px auto;
+    max-width: 600px;
+    position: relative;
+}
+
+.image-container img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+#results {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(33, 150, 243, 0.95);
+    padding: 20px;
+    border-radius: 8px;
+    color: white;
+    max-width: 80%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    display: none;
+    z-index: 10;
+}
+
+#results h3 {
+    margin-top: 0;
+    color: #FFD700;
+}
+
 #loginScreen, #welcomeScreen, #gameScreen {
-    /* max-width: 800px; */
     padding: 20px;
     display: none;
 }
@@ -187,17 +215,6 @@ input[type="text"]:focus {
 .question-text {
     margin: 20px auto;
     max-width: 600px;
-}
-
-.image-container {
-    margin: 15px auto;
-    max-width: 600px;
-}
-
-.image-container img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
 }
 
 @media (max-width: 480px) {

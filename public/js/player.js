@@ -75,18 +75,21 @@ function showLoginScreen() {
     document.getElementById('welcomeScreen').style.display = 'none';
     document.getElementById('gameScreen').style.display = 'none';
     document.getElementById('errorMessage').style.display = 'none';
+    document.getElementById('results').style.display = 'none';
 }
 
 function showWelcomeScreen() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('welcomeScreen').style.display = 'block';
     document.getElementById('gameScreen').style.display = 'none';
+    document.getElementById('results').style.display = 'none';
 }
 
 function showGameScreen() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('welcomeScreen').style.display = 'none';
     document.getElementById('gameScreen').style.display = 'block';
+    document.getElementById('results').style.display = 'none';
 }
 
 function joinGame() {
@@ -172,6 +175,7 @@ socket.on('new-question', (data) => {
     document.getElementById('questionImage').src = data.image;
     document.getElementById('questionText').textContent = data.questionText;
     document.getElementById('results').innerHTML = '';
+    document.getElementById('results').style.display = 'none';
     document.getElementById('gameProgress').textContent = 
         `Question ${data.questionNumber} of ${data.totalQuestions}`;
     
@@ -198,6 +202,7 @@ socket.on('answer-revealed', (data) => {
                 Points earned: ${result.points}</p>`;
         }
     });
+    results.style.display = 'block';
 });
 
 socket.on('game-over', (players) => {
@@ -211,6 +216,7 @@ socket.on('game-over', (players) => {
             </div>
         `).join('')}
     `;
+    results.style.display = 'block';
     localStorage.removeItem('quizSession');
     setTimeout(() => {
         showLoginScreen();
