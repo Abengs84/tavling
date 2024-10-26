@@ -188,20 +188,29 @@ socket.on('show-level', (data) => {
 });
 
 socket.on('answer-revealed', (data) => {
-    const results = document.getElementById('results');
-    results.innerHTML = `<h3>Correct Answer: ${data.correctAnswer}</h3>`;
-    
-    data.results.forEach(result => {
-        if (result.playerName === playerName) {
-            totalScore = result.totalScore;
-            document.getElementById('score').textContent = `Score: ${totalScore}`;
-            results.innerHTML += `
-                <p>You ${result.correct ? 'got it right' : 'got it wrong'}!<br>
-                Your answer: ${result.answer}<br>
-                Answered at Level: ${result.answeredAtLevel}<br>
-                Points earned: ${result.points}</p>`;
-        }
+    // Disable all choice buttons
+    document.querySelectorAll('.choice-button').forEach(btn => {
+        btn.disabled = true;
     });
+
+    const results = document.getElementById('results');
+    let resultContent = `<h3>Correct Answer: ${data.correctAnswer}</h3>`;
+    
+    const playerResult = data.results.find(result => result.playerName === playerName);
+    
+    if (!playerResult) {
+        resultContent += `<p>You did not provide a guess</p>`;
+    } else {
+        resultContent += `
+            <p>You ${playerResult.correct ? 'got it right' : 'got it wrong'}!<br>
+            Your answer: ${playerResult.answer}<br>
+            Answered at Level: ${playerResult.answeredAtLevel}<br>
+            Points earned: ${playerResult.points}</p>`;
+        totalScore = playerResult.totalScore;
+        document.getElementById('score').textContent = `Score: ${totalScore}`;
+    }
+    
+    results.innerHTML = resultContent;
     results.style.display = 'block';
 });
 
