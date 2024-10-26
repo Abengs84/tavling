@@ -1,3 +1,5 @@
 # tavling
-På spåret tävling för julshow 2024
-För att köra node server.js
+'På spåret' quiz for Julshow 2024
+How to run: node server.js
+
+Edit the questions.json file to change the quiz questions
