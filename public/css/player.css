@@ -65,6 +65,10 @@ body {
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
+.stars-container, #results .stars {
+    font-family: Arial, sans-serif; /* Ensure consistent star rendering */
+}
+
 /* Image container and results positioning */
 .image-container {
     margin: 8px auto;
@@ -206,6 +210,10 @@ body {
 #loginScreen {
     display: block;
     padding-top: 40px;
+}
+
+.stars-container:not(:empty), #results .stars:not(:empty) {
+    letter-spacing: 2px; /* Slightly more spacing for better readability */
 }
 
 #gameScreen {

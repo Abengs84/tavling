@@ -7,7 +7,12 @@ let currentQuestionIndex = -1;
 let submittedAnswer = null;
 
 const POINTS_PER_LEVEL = [10, 8, 6, 4];
-const STARS_PER_LEVEL = ['★★★★', '★★★', '★★', '★'];
+const STARS_PER_LEVEL = [
+    '★★★★',
+    '★★★☆',
+    '★★☆☆',
+    '★☆☆☆'
+];
 const TOP_PLAYERS_TO_SHOW = 5;
 
 // Check for existing session and reconnect
@@ -148,11 +153,16 @@ socket.on('answer-revealed', (data) => {
     if (!playerResult) {
         resultContent += `<p>Du gav inget svar</p>`;
     } else {
-        resultContent += `
-            <p>Du svarade ${playerResult.correct ? 'rätt' : 'fel'}!<br>
-            Ditt svar: ${playerResult.answer}<br>
-            <span class="stars">${STARS_PER_LEVEL[playerResult.answeredAtLevel - 1]}</span><br>
+        resultContent += `<p>Du svarade ${playerResult.correct ? 'rätt' : 'fel'}!`;
+        
+        // Only show player's answer if they were wrong
+        if (!playerResult.correct) {
+            resultContent += `<br>Ditt svar: ${playerResult.answer}`;
+        }
+        
+        resultContent += `<br><span class="stars">${STARS_PER_LEVEL[playerResult.answeredAtLevel - 1]}</span><br>
             Poäng: ${playerResult.points}</p>`;
+        
         totalScore = playerResult.totalScore;
         document.getElementById('score').textContent = `Poäng: ${totalScore}`;
     }
