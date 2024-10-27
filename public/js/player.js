@@ -114,7 +114,7 @@ socket.on('player-welcome', (data) => {
     }));
 
     document.getElementById('welcomePlayerName').textContent = playerName;
-    document.getElementById('score').textContent = `Score: ${totalScore}`;
+    document.getElementById('score').textContent = `Poäng: ${totalScore}`;
     
     if (data.gameInProgress) {
         showGameScreen();
@@ -129,14 +129,14 @@ socket.on('game-state', (state) => {
     hasAnswered = state.hasAnswered;
     submittedAnswer = state.answer;
 
-    document.getElementById('score').textContent = `Score: ${totalScore}`;
+    document.getElementById('score').textContent = `Poäng: ${totalScore}`;
     showGameScreen();
     
     updateLevelIndicator(state.currentLevel);
     document.getElementById('questionImage').src = state.image;
     document.getElementById('questionText').textContent = state.questionText;
     document.getElementById('gameProgress').textContent = 
-        `Question ${state.questionNumber} of ${state.totalQuestions}`;
+        `Fråga ${state.questionNumber} av ${state.totalQuestions}`;
     
     updateChoicesDisplay(state.choices, hasAnswered, submittedAnswer);
 });
@@ -177,9 +177,9 @@ socket.on('new-question', (data) => {
     document.getElementById('results').innerHTML = '';
     document.getElementById('results').style.display = 'none';
     document.getElementById('gameProgress').textContent = 
-        `Question ${data.questionNumber} of ${data.totalQuestions}`;
+        `Fråga ${data.questionNumber} av ${data.totalQuestions}`;
     
-    updateChoicesDisplay(data.choices, hasAnswered, submittedAnswer);
+    updateChoicesDisplay(state.choices, hasAnswered, submittedAnswer);
 });
 
 socket.on('show-level', (data) => {
@@ -194,20 +194,20 @@ socket.on('answer-revealed', (data) => {
     });
 
     const results = document.getElementById('results');
-    let resultContent = `<h3>Correct Answer: ${data.correctAnswer}</h3>`;
+    let resultContent = `<h3>Rätt svar: ${data.correctAnswer}</h3>`;
     
     const playerResult = data.results.find(result => result.playerName === playerName);
     
     if (!playerResult) {
-        resultContent += `<p>You did not provide a guess</p>`;
+        resultContent += `<p>Du gav inget svar</p>`;
     } else {
         resultContent += `
-            <p>You ${playerResult.correct ? 'got it right' : 'got it wrong'}!<br>
-            Your answer: ${playerResult.answer}<br>
-            Answered at Level: ${playerResult.answeredAtLevel}<br>
-            Points earned: ${playerResult.points}</p>`;
+            <p>Du svarade ${playerResult.correct ? 'rätt' : 'fel'}!<br>
+            Ditt svar: ${playerResult.answer}<br>
+            Svarade på nivå: ${playerResult.answeredAtLevel}<br>
+            Poäng: ${playerResult.points}</p>`;
         totalScore = playerResult.totalScore;
-        document.getElementById('score').textContent = `Score: ${totalScore}`;
+        document.getElementById('score').textContent = `Poäng: ${totalScore}`;
     }
     
     results.innerHTML = resultContent;
@@ -218,10 +218,10 @@ socket.on('game-over', (players) => {
     const sortedPlayers = players.sort((a, b) => b.score - a.score);
     const results = document.getElementById('results');
     results.innerHTML = `
-        <h2>Game Over - Final Scores</h2>
+        <h2>Spelet är slut - Slutresultat</h2>
         ${sortedPlayers.map((p, i) => `
             <div${p.name === playerName ? ' style="font-weight: bold;"' : ''}>
-                ${i + 1}. ${p.name}: ${p.score} points
+                ${i + 1}. ${p.name}: ${p.score} poäng
             </div>
         `).join('')}
     `;

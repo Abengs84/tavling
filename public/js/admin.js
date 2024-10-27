@@ -26,10 +26,10 @@ function enableOnlyStartGame() {
 
 socket.on('new-question', (data) => {
     document.getElementById('gameProgress').textContent = 
-        `Question ${data.questionNumber} of ${data.totalQuestions}`;
+        `Fråga ${data.questionNumber} av ${data.totalQuestions}`;
     document.getElementById('questionDetails').innerHTML = `
         <div class="question-text">${data.questionText}</div>
-        <div>Choices: ${data.choices.join(', ')}</div>
+        <div>Alternativ: ${data.choices.join(', ')}</div>
     `;
     const imageElement = document.getElementById('currentImage');
     imageElement.style.display = 'block';
@@ -81,8 +81,8 @@ function updateAnswersList() {
         div.innerHTML = `
             <div class="answer-details">
                 <strong>${answer.playerName}</strong>
-                <span class="answer-text">answered "${answer.answer}"</span>
-                <span class="level-badge">Level ${answer.level + 1}</span>
+                <span class="answer-text">svarade "${answer.answer}"</span>
+                <span class="level-badge">Nivå ${answer.level + 1}</span>
             </div>
         `;
         answersList.appendChild(div);
@@ -106,20 +106,20 @@ socket.on('answer-revealed', (data) => {
     });
     
     if (data.isLastQuestion) {
-        document.getElementById('nextQuestion').textContent = 'End Game';
+        document.getElementById('nextQuestion').textContent = 'Avsluta spelet';
     }
 });
 
 socket.on('game-over', (players) => {
     const sortedPlayers = players.sort((a, b) => b.score - a.score);
     document.getElementById('questionDetails').innerHTML = `
-        <h2>Game Over - Final Scores</h2>
+        <h2>Spelet är slut - Slutresultat</h2>
         ${sortedPlayers.map((p, i) => `
-            <div>${i + 1}. ${p.name}: ${p.score} points</div>
+            <div>${i + 1}. ${p.name}: ${p.score} poäng</div>
         `).join('')}
     `;
     enableOnlyStartGame();
-    document.getElementById('nextQuestion').textContent = 'Next Question';
+    document.getElementById('nextQuestion').textContent = 'Nästa fråga';
     // Hide the image element completely when game is over
     const imageElement = document.getElementById('currentImage');
     imageElement.style.display = 'none';
@@ -150,10 +150,10 @@ document.getElementById('revealAnswer').addEventListener('click', () => {
 });
 
 document.getElementById('nextQuestion').addEventListener('click', () => {
-    if (document.getElementById('nextQuestion').textContent === 'End Game') {
+    if (document.getElementById('nextQuestion').textContent === 'Avsluta spelet') {
         socket.emit('next-question');
         document.getElementById('nextQuestion').disabled = true;
-        document.getElementById('nextQuestion').textContent = 'Next Question';
+        document.getElementById('nextQuestion').textContent = 'Nästa fråga';
     } else {
         socket.emit('next-question');
         document.getElementById('nextQuestion').disabled = true;

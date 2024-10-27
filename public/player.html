@@ -1,29 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Quiz Player</title>
+    <title>Quiz Spelare</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/css/common.css">
     <link rel="stylesheet" href="/css/player.css">
 </head>
 <body>
     <div id="loginScreen">
-        <h2>Enter Your Name</h2>
-        <input type="text" id="playerName" placeholder="Your name">
+        <h2>Ange ditt namn</h2>
+        <input type="text" id="playerName" placeholder="Ditt namn">
         <div class="name-validation">
-            Name must be at least 3 characters long and contain only letters, numbers, and spaces
+            Namnet måste vara minst 3 tecken långt och får endast innehålla bokstäver, siffror och mellanslag
         </div>
         <div class="error-message" id="errorMessage"></div>
-        <button onclick="joinGame()">Join Game</button>
+        <button onclick="joinGame()">Gå med i spelet</button>
     </div>
 
     <div id="welcomeScreen">
         <div class="welcome-message">
-            <h2>Welcome to the Quiz Game</h2>
+            <h2>Välkommen till quizet</h2>
             <div class="player-name" id="welcomePlayerName"></div>
             <div class="waiting-text">
-                <p>You have successfully joined the game!</p>
-                <p class="pulse">Waiting for the admin to start the game...</p>
+                <p>Du är nu med i spelet!</p>
+                <p class="pulse">Väntar på att spelet ska börja...</p>
             </div>
         </div>
     </div>
@@ -31,11 +31,11 @@
     <div id="gameScreen">
         <div class="game-header">
             <div class="game-progress" id="gameProgress"></div>
-            <div id="score">Score: 0</div>
+            <div id="score">Poäng: 0</div>
         </div>
         <div class="question-text" id="questionText"></div>
         <div class="image-container">
-            <img id="questionImage" src="" alt="Question Image">
+            <img id="questionImage" src="" alt="Frågebild">
         </div>
         <div class="choices-container" id="choices">
             <!-- Choices will be added here dynamically -->
