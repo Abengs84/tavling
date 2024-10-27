@@ -1,24 +1,90 @@
 body {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     padding: 20px;
 }
 
+.admin-layout {
+    display: grid;
+    grid-template-columns: 250px 1fr 300px;
+    gap: 20px;
+    align-items: start;
+}
+
+.player-list-section {
+    background: #1e1e1e;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.player-list-section h2 {
+    margin-top: 0;
+    color: #2196F3;
+    margin-bottom: 15px;
+}
+
+#playersList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+#playersList li {
+    padding: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.control-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.question-info {
+    background: #1e1e1e;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 20px;
+}
+
 .game-controls {
     display: flex;
+    flex-direction: row;
     gap: 10px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
 }
 
 .game-controls button {
-    flex: 1;
-    min-width: 120px;
+    width: 100%;
+}
+
+.current-stars {
+    color: #FFD700;
+    font-size: 24px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    letter-spacing: 2px;
+    text-align: center;
+    margin: 10px 0;
+    transform: translateY(-69px);
 }
 
 .game-progress {
     font-size: 1.2em;
     margin-bottom: 15px;
+    grid-column: 1 / -1;
 }
 
 .question-text {
@@ -26,46 +92,45 @@ body {
     margin-bottom: 10px;
 }
 
+.current-image {
+    margin: 15px 0;
+    text-align: center;
+}
+
 #currentImage {
     max-width: 100%;
     height: auto;
-    margin: 15px 0;
     border-radius: 8px;
 }
 
-.players-section {
-    margin: 20px 0;
+.answers-section {
+    background: #1e1e1e;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    width: 450px;
 }
 
-.players-section h3 {
-    margin-bottom: 10px;
+.answers-section h2 {
+    margin-top: 0;
+    color: #2196F3;
+    margin-bottom: 15px;
 }
 
-#playersList {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-#playersList li {
-    padding: 5px 0;
-}
-
-/* Multi-column layout for answers */
 #answersList {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(137px, 1fr));
     gap: 10px;
-    margin: 10px 0;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
 }
 
 .player-answer {
-    background: #1e1e1e;
+    background: #2a2a2a;
     padding: 12px;
     border-radius: 8px;
     border-left: 4px solid #2196F3;
-    /* Remove margin since we're using grid gap */
-    margin: 0;
+    height: fit-content;
 }
 
 .answer-details {
@@ -77,11 +142,6 @@ body {
 
 .answer-text {
     color: #e0e0e0;
-    /* Prevent long answers from breaking layout */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 150px;
 }
 
 .level-badge {
@@ -90,7 +150,14 @@ body {
     padding: 4px 8px;
     border-radius: 12px;
     font-size: 0.9em;
-    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.level-badge .stars {
+    color: #FFD700;
+    letter-spacing: 1px;
 }
 
 .answer-status {
@@ -99,8 +166,6 @@ body {
     border-radius: 50%;
     font-weight: bold;
     font-size: 1.2em;
-    min-width: 20px;
-    text-align: center;
 }
 
 .answer-status.correct {
@@ -113,38 +178,33 @@ body {
     color: white;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    #answersList {
-        grid-template-columns: repeat(2, 1fr);
-    }
+.alternatives {
+    margin-top: 10px;
+    font-size: 1.1em;
 }
 
-@media (max-width: 480px) {
-    #answersList {
+.alternatives u {
+    color: #4CAF50;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+@media (max-width: 900px) {
+    .admin-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .question-info {
         grid-template-columns: 1fr;
     }
     
     .game-controls {
-        flex-direction: column;
+        flex-direction: row;
+        flex-wrap: wrap;
     }
     
     .game-controls button {
-        width: 100%;
-    }
-    
-    .answer-details {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 5px;
-    }
-    
-    .answer-status {
-        margin-left: 0;
-        margin-top: 5px;
-    }
-
-    .answer-text {
-        max-width: 100%;
+        flex: 1;
+        min-width: 150px;
     }
 }

@@ -103,7 +103,6 @@ io.on('connection', (socket) => {
         gameState.adminSocket = socket;
         gameState.questions = loadQuestions();
         socket.emit('admin-connected');
-        // Send current players list to admin
         sendCurrentPlayers(socket);
     });
 
@@ -147,10 +146,8 @@ io.on('connection', (socket) => {
         const playerSession = gameState.playerSessions.get(sessionData.name);
         
         if (playerSession) {
-            // Update session with new socket id
             playerSession.sessionId = socket.id;
             
-            // Update or create player entry
             gameState.players.set(socket.id, {
                 name: sessionData.name,
                 score: playerSession.score
@@ -164,7 +161,6 @@ io.on('connection', (socket) => {
                 score: playerSession.score
             });
 
-            // Notify admin of reconnection
             io.to('admin').emit('player-joined', {
                 id: socket.id,
                 name: sessionData.name
@@ -172,11 +168,10 @@ io.on('connection', (socket) => {
 
             emitPlayerCount();
 
-            // Immediately send current game state if game is in progress
             if (gameState.isGameStarted) {
                 setTimeout(() => {
                     sendCurrentGameState(socket, sessionData.name);
-                }, 500); // Small delay to ensure client is ready
+                }, 500);
             }
         } else {
             socket.emit('connection-error', 'Session expired. Please enter your name again.');
@@ -196,20 +191,31 @@ io.on('connection', (socket) => {
         gameState.isGameStarted = true;
         gameState.playerAnswers.clear();
         
-        // First notify all players that game is starting
         io.emit('game-started');
         
-        // Then start the first question
         setTimeout(() => {
             startNewQuestion();
-        }, 1000); // Delay to allow clients to transition to game page
+        }, 1000);
     });
 
     function startNewQuestion() {
         gameState.currentQuestion = gameState.questions[gameState.currentQuestionIndex];
         gameState.currentLevel = 0;
         gameState.playerAnswers.set(gameState.currentQuestionIndex, new Map());
-        io.emit('new-question', {
+
+        // Send data with correct answer to admin
+        io.to('admin').emit('new-question', {
+            questionNumber: gameState.currentQuestionIndex + 1,
+            totalQuestions: gameState.questions.length,
+            questionText: gameState.currentQuestion.question,
+            level: 0,
+            image: gameState.currentQuestion.images[0],
+            choices: gameState.currentQuestion.choices,
+            correctAnswer: gameState.currentQuestion.correctAnswer
+        });
+
+        // Send data without correct answer to players
+        io.to('players').emit('new-question', {
             questionNumber: gameState.currentQuestionIndex + 1,
             totalQuestions: gameState.questions.length,
             questionText: gameState.currentQuestion.question,
@@ -246,13 +252,11 @@ io.on('connection', (socket) => {
         const player = gameState.players.get(socket.id);
         if (!player) return;
 
-        // Check if player has already answered this question
         if (hasPlayerAnswered(player.name)) {
             socket.emit('answer-error', 'Du har redan svarat på denna fråga');
             return;
         }
 
-        // Store the answer
         const questionAnswers = gameState.playerAnswers.get(gameState.currentQuestionIndex);
         questionAnswers.set(player.name, {
             answer: answer,
@@ -266,7 +270,6 @@ io.on('connection', (socket) => {
             answer: answer
         });
 
-        // Confirm to player their answer was recorded
         socket.emit('answer-confirmed', {
             answer: answer,
             level: gameState.currentLevel
@@ -283,7 +286,6 @@ io.on('connection', (socket) => {
                     const isCorrect = answerData.answer === gameState.currentQuestion.correctAnswer;
                     const points = isCorrect ? POINTS_PER_LEVEL[answerData.level] : 0;
                     
-                    // Find player by name
                     const playerEntry = Array.from(gameState.players.entries())
                         .find(([_, p]) => p.name === playerName);
                     
@@ -291,7 +293,6 @@ io.on('connection', (socket) => {
                         const [_, player] = playerEntry;
                         player.score += points;
                         
-                        // Update session score
                         const session = gameState.playerSessions.get(playerName);
                         if (session) {
                             session.score = player.score;
@@ -323,7 +324,6 @@ io.on('connection', (socket) => {
         } else {
             const player = gameState.players.get(socket.id);
             if (player) {
-                // Don't delete the session, just the socket connection
                 gameState.players.delete(socket.id);
                 io.to('admin').emit('player-left', { id: socket.id });
                 emitPlayerCount();

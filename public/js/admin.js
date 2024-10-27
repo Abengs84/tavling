@@ -5,9 +5,17 @@ let answerRevealed = false;
 let correctAnswer = null;
 const playerAnswers = new Map();
 
+const STARS_PER_LEVEL = [
+    '★★★★',
+    '★★★✰',
+    '★★✰✰',
+    '★✰✰✰'
+];
+
 socket.emit('admin-connect');
 
 socket.on('admin-connected', () => {
+    console.log('Connected as admin');
     enableOnlyStartGame();
     // Hide the image element completely
     const imageElement = document.getElementById('currentImage');
@@ -21,6 +29,7 @@ function enableOnlyStartGame() {
     document.getElementById('revealAnswer').disabled = true;
     document.getElementById('nextQuestion').disabled = true;
     document.getElementById('answersList').innerHTML = '';
+    document.getElementById('currentStars').textContent = '';
     playerAnswers.clear();
     correctAnswer = null;
     answerRevealed = false;
@@ -29,22 +38,28 @@ function enableOnlyStartGame() {
 socket.on('new-question', (data) => {
     document.getElementById('gameProgress').textContent = 
         `Fråga ${data.questionNumber} av ${data.totalQuestions}`;
+    
+    // Store correct answer for underlining
+    correctAnswer = data.correctAnswer;
+    
     document.getElementById('questionDetails').innerHTML = `
         <div class="question-text">${data.questionText}</div>
-        <div>Alternativ: ${data.choices.join(', ')}</div>
+        <div class="alternatives">Alternativ: ${data.choices.map(choice => 
+            choice === correctAnswer ? `<u>${choice}</u>` : choice
+        ).join(', ')}</div>
     `;
     const imageElement = document.getElementById('currentImage');
     imageElement.style.display = 'block';
     imageElement.src = data.image;
     document.getElementById('answersList').innerHTML = '';
+    document.getElementById('currentStars').textContent = STARS_PER_LEVEL[0];
     playerAnswers.clear();
     currentLevel = 0;
     answerRevealed = false;
-    correctAnswer = null;
     
     document.getElementById('startGame').disabled = true;
     document.getElementById('nextLevel').disabled = false;
-    document.getElementById('revealAnswer').disabled = false;
+    document.getElementById('revealAnswer').disabled = true; // Start with reveal disabled
     document.getElementById('nextQuestion').disabled = true;
 });
 
@@ -94,7 +109,9 @@ function updateAnswersList() {
             <div class="answer-details">
                 <strong>${answer.playerName}</strong>
                 <span class="answer-text"> ${answer.answer}</span>
-                <span class="level-badge">Nivå ${answer.level + 1}</span>
+                <span class="level-badge">
+                    ${STARS_PER_LEVEL[answer.level]}
+                </span>
                 ${answerStatus}
             </div>
         `;
@@ -104,7 +121,6 @@ function updateAnswersList() {
 
 socket.on('answer-revealed', (data) => {
     answerRevealed = true;
-    correctAnswer = data.correctAnswer;
     document.getElementById('nextLevel').disabled = true;
     document.getElementById('revealAnswer').disabled = true;
     document.getElementById('nextQuestion').disabled = false;
@@ -145,9 +161,12 @@ document.getElementById('nextLevel').addEventListener('click', () => {
         const currentSrc = document.getElementById('currentImage').src;
         const nextImageNumber = currentLevel + 1;
         document.getElementById('currentImage').src = currentSrc.replace(/level\d\.jpg/, `level${nextImageNumber}.jpg`);
+        document.getElementById('currentStars').textContent = STARS_PER_LEVEL[currentLevel];
         
+        // Enable reveal answer only when all levels have been shown
         if (currentLevel === 3) {
             document.getElementById('nextLevel').disabled = true;
+            document.getElementById('revealAnswer').disabled = false;
         }
     }
 });

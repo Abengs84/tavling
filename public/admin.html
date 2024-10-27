@@ -6,30 +6,35 @@
     <link rel="stylesheet" href="/css/admin.css">
 </head>
 <body>
-    <div class="control-panel">
-        <h2>Spelkontroller</h2>
-        <div class="question-info">
-            <div class="game-progress" id="gameProgress"></div>
-            <div id="questionDetails"></div>
+    <div class="admin-layout">
+        <div class="player-list-section">
+            <h2>Anslutna spelare</h2>
+            <ul id="playersList"></ul>
         </div>
-        <button id="startGame">Starta spelet</button>
-        <button id="nextLevel" disabled>Visa nästa nivå</button>
-        <button id="revealAnswer" disabled>Visa svaret</button>
-        <button id="nextQuestion" disabled>Nästa fråga</button>
-        
-        <div class="current-image">
-            <img id="currentImage" src="" alt="Aktuell frågebild" style="max-width: 400px;">
+
+        <div class="control-panel">
+            <div class="question-info">
+                <div class="game-progress" id="gameProgress"></div>
+                <div id="questionDetails"></div>
+                <div class="current-stars" id="currentStars"></div>
+            </div>
+            
+            <div class="game-controls">
+                <button id="startGame">Starta spelet</button>
+                <button id="nextLevel" disabled>Visa nästa nivå</button>
+                <button id="revealAnswer" disabled>Visa svaret</button>
+                <button id="nextQuestion" disabled>Nästa fråga</button>
+            </div>
+            
+            <div class="current-image">
+                <img id="currentImage" src="" alt="Aktuell frågebild" style="max-width: 400px;">
+            </div>
         </div>
-    </div>
 
-    <div class="player-list">
-        <h2>Anslutna spelare</h2>
-        <ul id="playersList"></ul>
-    </div>
-
-    <div class="player-list">
-        <h2>Inlämnade svar</h2>
-        <div id="answersList"></div>
+        <div class="answers-section">
+            <h2>Inlämnade svar</h2>
+            <div id="answersList"></div>
+        </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
