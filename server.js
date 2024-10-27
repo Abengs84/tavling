@@ -26,7 +26,8 @@ function validatePlayerName(name) {
     if (name.length < 3) {
         return { valid: false, error: 'Namnet måste vara minst 3 tecken långt' };
     }
-    if (!/^[a-zA-Z0-9 ]+$/.test(name)) {
+    // Updated regex to allow Swedish characters
+    if (!/^[a-zA-ZåäöÅÄÖ0-9 ]+$/.test(name)) {
         return { valid: false, error: 'Namnet får endast innehålla bokstäver, siffror och mellanslag' };
     }
     // Check if name is taken by an active player (not just in sessions)
