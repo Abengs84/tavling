@@ -99,7 +99,8 @@ body {
     color: #FFD700;
 }
 
-#loginScreen, #welcomeScreen, #gameScreen {
+/* Only hide screens on index.html */
+#loginScreen, #welcomeScreen {
     padding: 20px;
     display: none;
 }
