@@ -194,6 +194,15 @@ body {
     display: none;
 }
 
+#results .stars {
+    display: inline-block;
+    color: #FFD700;
+    font-size: 1.2em;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    letter-spacing: 1px;
+    margin: 5px 0;
+}
+
 #loginScreen {
     display: block;
     padding-top: 40px;
@@ -315,7 +324,7 @@ input[type="text"]:focus {
     .welcome-message {
         padding: 15px;
         margin: 15px;
-    }
+}
 
     .welcome-message h2 {
         font-size: 1.3em;

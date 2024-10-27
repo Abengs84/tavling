@@ -8,7 +8,7 @@ let submittedAnswer = null;
 
 const POINTS_PER_LEVEL = [10, 8, 6, 4];
 const STARS_PER_LEVEL = ['★★★★', '★★★', '★★', '★'];
-const TOP_PLAYERS_TO_SHOW = 10;
+const TOP_PLAYERS_TO_SHOW = 5;
 
 // Check for existing session and reconnect
 window.onload = function() {
@@ -151,7 +151,7 @@ socket.on('answer-revealed', (data) => {
         resultContent += `
             <p>Du svarade ${playerResult.correct ? 'rätt' : 'fel'}!<br>
             Ditt svar: ${playerResult.answer}<br>
-            Svarade på nivå: ${playerResult.answeredAtLevel}<br>
+            <span class="stars">${STARS_PER_LEVEL[playerResult.answeredAtLevel - 1]}</span><br>
             Poäng: ${playerResult.points}</p>`;
         totalScore = playerResult.totalScore;
         document.getElementById('score').textContent = `Poäng: ${totalScore}`;
