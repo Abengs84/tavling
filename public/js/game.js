@@ -9,9 +9,9 @@ let submittedAnswer = null;
 const POINTS_PER_LEVEL = [10, 8, 6, 4];
 const STARS_PER_LEVEL = [
     '★★★★',
-    '★★★☆',
-    '★★☆☆',
-    '★☆☆☆'
+    '★★★✰',
+    '★★✰✰',
+    '★✰✰✰'
 ];
 const TOP_PLAYERS_TO_SHOW = 5;
 
@@ -158,10 +158,12 @@ socket.on('answer-revealed', (data) => {
         // Only show player's answer if they were wrong
         if (!playerResult.correct) {
             resultContent += `<br>Ditt svar: ${playerResult.answer}`;
+        } else {
+            // Only show stars if they were correct
+            resultContent += `<br><span class="stars">${STARS_PER_LEVEL[playerResult.answeredAtLevel - 1]}</span>`;
         }
         
-        resultContent += `<br><span class="stars">${STARS_PER_LEVEL[playerResult.answeredAtLevel - 1]}</span><br>
-            Poäng: ${playerResult.points}</p>`;
+        resultContent += `<br>Poäng: ${playerResult.points}</p>`;
         
         totalScore = playerResult.totalScore;
         document.getElementById('score').textContent = `Poäng: ${totalScore}`;
