@@ -1,143 +1,150 @@
-/* Override dark theme from common.css for admin interface */
 body {
-    background-color: #f8f9fa;
-    color: #212529;
-}
-
-button {
-    background: #0d6efd;
-    color: white;
-}
-
-button:disabled {
-    background: #e9ecef;
-    color: #6c757d;
-}
-
-.control-panel {
-    background: white;
+    max-width: 1200px;
+    margin: 0 auto;
     padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.player-list {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
+.game-controls {
+    display: flex;
+    gap: 10px;
     margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    flex-wrap: wrap;
 }
 
-.question-info {
-    background: white;
-    border: 1px solid #dee2e6;
+.game-controls button {
+    flex: 1;
+    min-width: 120px;
 }
 
 .game-progress {
-    color: #6c757d;
+    font-size: 1.2em;
+    margin-bottom: 15px;
 }
 
 .question-text {
-    color: #212529;
+    font-size: 1.3em;
+    margin-bottom: 10px;
 }
 
-#playersList, #answersList {
+#currentImage {
+    max-width: 100%;
+    height: auto;
+    margin: 15px 0;
+    border-radius: 8px;
+}
+
+.players-section {
+    margin: 20px 0;
+}
+
+.players-section h3 {
+    margin-bottom: 10px;
+}
+
+#playersList {
     list-style: none;
     padding: 0;
+    margin: 0;
 }
 
-#playersList li, #answersList li {
-    padding: 5px;
-    margin: 5px 0;
-    background: #f8f9fa;
-    border-radius: 4px;
-    border: 1px solid #dee2e6;
+#playersList li {
+    padding: 5px 0;
+}
+
+/* Multi-column layout for answers */
+#answersList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.player-answer {
+    background: #1e1e1e;
+    padding: 12px;
+    border-radius: 8px;
+    border-left: 4px solid #2196F3;
+    /* Remove margin since we're using grid gap */
+    margin: 0;
 }
 
 .answer-details {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .answer-text {
-    color: #495057;
-    font-style: italic;
+    color: #e0e0e0;
+    /* Prevent long answers from breaking layout */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 150px;
 }
 
 .level-badge {
-    background: #0d6efd;
+    background: #2196F3;
     color: white;
     padding: 4px 8px;
     border-radius: 12px;
     font-size: 0.9em;
+    white-space: nowrap;
 }
 
-.results-panel {
-    margin-top: 20px;
-    padding: 15px;
-    background: #e3f2fd;
-    border-radius: 8px;
-    display: none;
-}
-
-.correct-answer {
-    color: #198754;
+.answer-status {
+    margin-left: auto;
+    padding: 4px 8px;
+    border-radius: 50%;
     font-weight: bold;
     font-size: 1.2em;
-    margin-bottom: 10px;
+    min-width: 20px;
+    text-align: center;
 }
 
-.player-result {
-    margin: 5px 0;
-    padding: 8px;
-    background: white;
-    border-radius: 4px;
+.answer-status.correct {
+    background: #28a745;
+    color: white;
 }
 
-.player-result.correct {
-    border-left: 4px solid #198754;
+.answer-status.incorrect {
+    background: #dc3545;
+    color: white;
 }
 
-.player-result.incorrect {
-    border-left: 4px solid #dc3545;
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #answersList {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
-/* Override error message styles for light theme */
-.error-message {
-    color: #dc3545;
-    background-color: #f8d7da;
-    border-color: #f5c2c7;
-}
+@media (max-width: 480px) {
+    #answersList {
+        grid-template-columns: 1fr;
+    }
+    
+    .game-controls {
+        flex-direction: column;
+    }
+    
+    .game-controls button {
+        width: 100%;
+    }
+    
+    .answer-details {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .answer-status {
+        margin-left: 0;
+        margin-top: 5px;
+    }
 
-/* Override results section for light theme */
-#results {
-    background: white;
-    border: 1px solid #dee2e6;
-}
-
-.level-indicator {
-    color: #0d6efd;
-}
-
-#score {
-    color: #198754;
-}
-
-/* Ensure image container has proper contrast in light theme */
-.image-container {
-    background: white;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #dee2e6;
-}
-
-/* Add subtle borders to sections for better visual hierarchy */
-h2 {
-    color: #212529;
-    border-bottom: 2px solid #dee2e6;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
+    .answer-text {
+        max-width: 100%;
+    }
 }

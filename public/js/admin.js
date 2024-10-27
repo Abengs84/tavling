@@ -3,6 +3,8 @@ let currentLevel = 0;
 let gameStarted = false;
 let answerRevealed = false;
 const playerAnswers = new Map();
+let correctAnswer = null;
+const connectedPlayers = new Map(); // Track connected players
 
 socket.emit('admin-connect');
 
@@ -22,6 +24,19 @@ function enableOnlyStartGame() {
     document.getElementById('nextQuestion').disabled = true;
     document.getElementById('answersList').innerHTML = '';
     playerAnswers.clear();
+}
+
+function updatePlayersList() {
+    const playersList = document.getElementById('playersList');
+    playersList.innerHTML = '';
+    Array.from(connectedPlayers.values())
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .forEach(player => {
+            const li = document.createElement('li');
+            li.id = `player-${player.id}`;
+            li.textContent = player.name;
+            playersList.appendChild(li);
+        });
 }
 
 socket.on('new-question', (data) => {
@@ -46,18 +61,13 @@ socket.on('new-question', (data) => {
 });
 
 socket.on('player-joined', (player) => {
-    const existingLi = document.getElementById(`player-${player.id}`);
-    if (!existingLi) {
-        const li = document.createElement('li');
-        li.id = `player-${player.id}`;
-        li.textContent = player.name;
-        document.getElementById('playersList').appendChild(li);
-    }
+    connectedPlayers.set(player.id, player);
+    updatePlayersList();
 });
 
 socket.on('player-left', (player) => {
-    const li = document.getElementById(`player-${player.id}`);
-    if (li) li.remove();
+    connectedPlayers.delete(player.id);
+    updatePlayersList();
 });
 
 socket.on('player-answered', (data) => {
@@ -78,11 +88,21 @@ function updateAnswersList() {
     sortedAnswers.forEach(answer => {
         const div = document.createElement('div');
         div.className = 'player-answer';
+        
+        let answerStatus = '';
+        if (correctAnswer !== null) {
+            const isCorrect = answer.answer === correctAnswer;
+            answerStatus = `<span class="answer-status ${isCorrect ? 'correct' : 'incorrect'}">
+                ${isCorrect ? '✓' : '✗'}
+            </span>`;
+        }
+        
         div.innerHTML = `
             <div class="answer-details">
                 <strong>${answer.playerName}</strong>
                 <span class="answer-text">svarade "${answer.answer}"</span>
                 <span class="level-badge">Nivå ${answer.level + 1}</span>
+                ${answerStatus}
             </div>
         `;
         answersList.appendChild(div);
@@ -91,19 +111,13 @@ function updateAnswersList() {
 
 socket.on('answer-revealed', (data) => {
     answerRevealed = true;
+    correctAnswer = data.correctAnswer;
     document.getElementById('nextLevel').disabled = true;
     document.getElementById('revealAnswer').disabled = true;
     document.getElementById('nextQuestion').disabled = false;
     
-    // Update answer list with correct/incorrect status
-    const answersList = document.getElementById('answersList');
-    data.results.forEach(result => {
-        const answerDiv = Array.from(answersList.children)
-            .find(div => div.querySelector('strong').textContent === result.playerName);
-        if (answerDiv) {
-            answerDiv.style.borderLeftColor = result.correct ? '#28a745' : '#dc3545';
-        }
-    });
+    // Update the answers list with correct/incorrect indicators
+    updateAnswersList();
     
     if (data.isLastQuestion) {
         document.getElementById('nextQuestion').textContent = 'Avsluta spelet';
@@ -124,6 +138,20 @@ socket.on('game-over', (players) => {
     const imageElement = document.getElementById('currentImage');
     imageElement.style.display = 'none';
     imageElement.src = '';
+    
+    // Clear answers but keep player list
+    document.getElementById('answersList').innerHTML = '';
+    playerAnswers.clear();
+    correctAnswer = null;
+});
+
+socket.on('current-players', (players) => {
+    // Update connected players when receiving current state
+    connectedPlayers.clear();
+    players.forEach(player => {
+        connectedPlayers.set(player.id, player);
+    });
+    updatePlayersList();
 });
 
 document.getElementById('startGame').addEventListener('click', () => {

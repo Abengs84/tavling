@@ -94,6 +94,84 @@ body {
     z-index: 10;
 }
 
+/* Final Scores Styling */
+.final-scores {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #1e1e1e;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    width: 90%;
+    max-width: 400px;
+    z-index: 1000;
+}
+
+.final-scores h2 {
+    color: #2196F3;
+    margin: 0 0 25px 0;
+    font-size: 1.8em;
+    text-align: center;
+}
+
+.scores-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.score-entry {
+    display: grid;
+    grid-template-columns: 30px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    background: #2a2a2a;
+    border-radius: 8px;
+    transition: transform 0.2s;
+}
+
+.score-entry:hover {
+    transform: translateX(5px);
+}
+
+.score-entry.current-player {
+    background: #1976D2;
+    font-weight: bold;
+}
+
+.position {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #2196F3;
+    text-align: center;
+}
+
+.current-player .position {
+    color: #FFD700;
+}
+
+.player-name {
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 10px;
+}
+
+.final-score {
+    font-weight: bold;
+    color: #4CAF50;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.current-player .final-score {
+    color: white;
+}
+
 #results h3 {
     margin-top: 0;
     color: #FFD700;
@@ -185,9 +263,11 @@ body {
     background: #1e1e1e;
     color: #666;
 }
+
 button {
     margin: 0;
 }
+
 input[type="text"] {
     padding: 12px;
     margin: 10px;
@@ -212,6 +292,7 @@ input[type="text"]:focus {
     color: #2196F3;
     margin: 10px 0;
     word-wrap: break-word;
+    text-align: center;
 }
 
 .question-text {
@@ -240,5 +321,24 @@ input[type="text"]:focus {
 
     #score {
         font-size: 0.9em;
+    }
+
+    .final-scores {
+        padding: 20px;
+        width: 95%;
+    }
+
+    .final-scores h2 {
+        font-size: 1.5em;
+        margin-bottom: 20px;
+    }
+
+    .score-entry {
+        padding: 8px 12px;
+        gap: 8px;
+    }
+
+    .position {
+        font-size: 1.1em;
     }
 }

@@ -84,6 +84,14 @@ function sendCurrentGameState(socket, playerName) {
     }
 }
 
+function sendCurrentPlayers(socket) {
+    const players = Array.from(gameState.players.entries()).map(([id, player]) => ({
+        id,
+        name: player.name
+    }));
+    socket.emit('current-players', players);
+}
+
 io.on('connection', (socket) => {
     socket.on('validate-name', (name) => {
         const validation = validatePlayerName(name);
@@ -95,6 +103,8 @@ io.on('connection', (socket) => {
         gameState.adminSocket = socket;
         gameState.questions = loadQuestions();
         socket.emit('admin-connected');
+        // Send current players list to admin
+        sendCurrentPlayers(socket);
     });
 
     socket.on('player-connect', (playerData) => {
@@ -152,6 +162,12 @@ io.on('connection', (socket) => {
                 gameInProgress: gameState.isGameStarted,
                 sessionId: socket.id,
                 score: playerSession.score
+            });
+
+            // Notify admin of reconnection
+            io.to('admin').emit('player-joined', {
+                id: socket.id,
+                name: sessionData.name
             });
 
             emitPlayerCount();

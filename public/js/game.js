@@ -8,6 +8,7 @@ let submittedAnswer = null;
 
 const POINTS_PER_LEVEL = [10, 8, 6, 4];
 const STARS_PER_LEVEL = ['★★★★', '★★★', '★★', '★'];
+const TOP_PLAYERS_TO_SHOW = 10;
 
 // Check for existing session and reconnect
 window.onload = function() {
@@ -162,20 +163,49 @@ socket.on('answer-revealed', (data) => {
 
 socket.on('game-over', (players) => {
     const sortedPlayers = players.sort((a, b) => b.score - a.score);
-    const results = document.getElementById('results');
-    results.innerHTML = `
-        <h2>Spelet är slut - Slutresultat</h2>
-        ${sortedPlayers.map((p, i) => `
-            <div${p.name === playerName ? ' style="font-weight: bold;"' : ''}>
-                ${i + 1}. ${p.name}: ${p.score} poäng
-            </div>
-        `).join('')}
+    
+    // Find current player's position
+    const currentPlayerIndex = sortedPlayers.findIndex(p => p.name === playerName);
+    
+    // Get top players and current player if not in top
+    let playersToShow = sortedPlayers.slice(0, TOP_PLAYERS_TO_SHOW);
+    if (currentPlayerIndex >= TOP_PLAYERS_TO_SHOW) {
+        playersToShow.push({
+            ...sortedPlayers[currentPlayerIndex],
+            showDivider: true // Add flag to show divider
+        });
+    }
+    
+    // Hide game elements
+    document.getElementById('questionImage').style.display = 'none';
+    document.getElementById('choices').style.display = 'none';
+    document.getElementById('gameProgress').style.display = 'none';
+    document.querySelector('.level-indicator').style.display = 'none';
+    
+    // Create a new container for final scores
+    const gameScreen = document.getElementById('gameScreen');
+    const finalScoresDiv = document.createElement('div');
+    finalScoresDiv.className = 'final-scores';
+    finalScoresDiv.innerHTML = `
+        <h2>Spelet är slut<br>Slutresultat</h2>
+        <div class="scores-list">
+            ${playersToShow.map((p, i) => `
+                ${p.showDivider ? '<div class="score-divider"></div>' : ''}
+                <div class="score-entry${p.name === playerName ? ' current-player' : ''}">
+                    <div class="position">${p.showDivider ? currentPlayerIndex + 1 : i + 1}</div>
+                    <div class="player-name">${p.name}</div>
+                    <div class="final-score">${p.score} poäng</div>
+                </div>
+            `).join('')}
+        </div>
     `;
-    results.style.display = 'block';
+    
+    // Clear and append the final scores
+    gameScreen.innerHTML = '';
+    gameScreen.appendChild(finalScoresDiv);
+    
+    // Clear session but don't redirect
     localStorage.removeItem('quizSession');
-    setTimeout(() => {
-        window.location.href = '/index.html';
-    }, 10000);
 });
 
 socket.on('disconnect', () => {
