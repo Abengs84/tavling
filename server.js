@@ -23,14 +23,14 @@ const POINTS_PER_LEVEL = [10, 8, 6, 4];
 
 function validatePlayerName(name) {
     if (name.length < 3) {
-        return { valid: false, error: 'Name must be at least 3 characters long' };
+        return { valid: false, error: 'Namnet måste vara minst 3 tecken långt' };
     }
     if (!/^[a-zA-Z0-9 ]+$/.test(name)) {
-        return { valid: false, error: 'Name can only contain letters, numbers, and spaces' };
+        return { valid: false, error: 'Namnet får endast innehålla bokstäver, siffror och mellanslag' };
     }
     const existingNames = Array.from(gameState.players.values()).map(p => p.name.toLowerCase());
     if (existingNames.includes(name.toLowerCase())) {
-        return { valid: false, error: 'This name is already taken' };
+        return { valid: false, error: 'Detta namn är redan taget' };
     }
     return { valid: true };
 }
@@ -55,6 +55,10 @@ function getPlayerAnswer(playerName) {
     }
     const questionAnswers = gameState.playerAnswers.get(gameState.currentQuestionIndex);
     return questionAnswers.get(playerName);
+}
+
+function emitPlayerCount() {
+    io.emit('players-updated', gameState.players.size);
 }
 
 io.on('connection', (socket) => {
@@ -94,6 +98,8 @@ io.on('connection', (socket) => {
             name: playerData.name
         });
 
+        emitPlayerCount();
+
         if (gameState.isGameStarted && gameState.currentQuestion) {
             const playerAnswer = getPlayerAnswer(playerData.name);
             socket.emit('new-question', {
@@ -125,6 +131,8 @@ io.on('connection', (socket) => {
                 sessionId: socket.id,
                 score: playerInfo.score
             });
+
+            emitPlayerCount();
 
             if (gameState.isGameStarted && gameState.currentQuestion) {
                 const playerAnswer = getPlayerAnswer(playerInfo.name);
@@ -197,7 +205,7 @@ io.on('connection', (socket) => {
 
         // Check if player has already answered this question
         if (hasPlayerAnswered(player.name)) {
-            socket.emit('answer-error', 'You have already answered this question');
+            socket.emit('answer-error', 'Du har redan svarat på denna fråga');
             return;
         }
 
@@ -262,6 +270,10 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         if (socket === gameState.adminSocket) {
             gameState.adminSocket = null;
+        } else {
+            gameState.players.delete(socket.id);
+            io.to('admin').emit('player-left', { id: socket.id });
+            emitPlayerCount();
         }
     });
 });

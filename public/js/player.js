@@ -5,6 +5,7 @@ let playerName = '';
 let sessionId = '';
 let currentQuestionIndex = -1;
 let submittedAnswer = null;
+let otherPlayersCount = 0;
 
 const POINTS_PER_LEVEL = [10, 8, 6, 4];
 const STARS_PER_LEVEL = ['★★★★', '★★★', '★★', '★'];
@@ -23,6 +24,17 @@ function updateLevelIndicator(level) {
     const starsContainer = document.getElementById('starsContainer');
     pointsIndicator.textContent = POINTS_PER_LEVEL[level];
     starsContainer.textContent = STARS_PER_LEVEL[level];
+}
+
+function updateOtherPlayersCount() {
+    const countElement = document.getElementById('otherPlayersCount');
+    if (otherPlayersCount === 0) {
+        countElement.textContent = 'Inga andra spelare har anslutit än';
+    } else if (otherPlayersCount === 1) {
+        countElement.textContent = '1 annan spelare har anslutit';
+    } else {
+        countElement.textContent = `${otherPlayersCount} andra spelare har anslutit`;
+    }
 }
 
 function updateChoicesDisplay(choices, hasAnswered, submittedAnswer) {
@@ -123,6 +135,11 @@ socket.on('player-welcome', (data) => {
     }
 });
 
+socket.on('players-updated', (count) => {
+    otherPlayersCount = Math.max(0, count - 1); // Subtract 1 to exclude current player
+    updateOtherPlayersCount();
+});
+
 socket.on('game-state', (state) => {
     currentQuestionIndex = state.currentQuestionIndex;
     totalScore = state.score;
@@ -179,7 +196,7 @@ socket.on('new-question', (data) => {
     document.getElementById('gameProgress').textContent = 
         `Fråga ${data.questionNumber} av ${data.totalQuestions}`;
     
-    updateChoicesDisplay(state.choices, hasAnswered, submittedAnswer);
+    updateChoicesDisplay(data.choices, hasAnswered, submittedAnswer);
 });
 
 socket.on('show-level', (data) => {
