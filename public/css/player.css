@@ -114,12 +114,23 @@ body {
     margin: 0 0 25px 0;
     font-size: 1.8em;
     text-align: center;
+    line-height: 1.4;
 }
 
 .scores-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.score-divider {
+    height: 1px;
+    background: #2196F3;
+    margin: 8px 0;
+    opacity: 0.3;
 }
 
 .score-entry {
@@ -331,6 +342,10 @@ input[type="text"]:focus {
     .final-scores h2 {
         font-size: 1.5em;
         margin-bottom: 20px;
+    }
+
+    .scores-list {
+        max-height: 70vh;
     }
 
     .score-entry {

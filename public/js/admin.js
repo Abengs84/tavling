@@ -2,9 +2,8 @@ const socket = io();
 let currentLevel = 0;
 let gameStarted = false;
 let answerRevealed = false;
-const playerAnswers = new Map();
 let correctAnswer = null;
-const connectedPlayers = new Map(); // Track connected players
+const playerAnswers = new Map();
 
 socket.emit('admin-connect');
 
@@ -24,19 +23,8 @@ function enableOnlyStartGame() {
     document.getElementById('nextQuestion').disabled = true;
     document.getElementById('answersList').innerHTML = '';
     playerAnswers.clear();
-}
-
-function updatePlayersList() {
-    const playersList = document.getElementById('playersList');
-    playersList.innerHTML = '';
-    Array.from(connectedPlayers.values())
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .forEach(player => {
-            const li = document.createElement('li');
-            li.id = `player-${player.id}`;
-            li.textContent = player.name;
-            playersList.appendChild(li);
-        });
+    correctAnswer = null;
+    answerRevealed = false;
 }
 
 socket.on('new-question', (data) => {
@@ -53,6 +41,7 @@ socket.on('new-question', (data) => {
     playerAnswers.clear();
     currentLevel = 0;
     answerRevealed = false;
+    correctAnswer = null;
     
     document.getElementById('startGame').disabled = true;
     document.getElementById('nextLevel').disabled = false;
@@ -61,13 +50,18 @@ socket.on('new-question', (data) => {
 });
 
 socket.on('player-joined', (player) => {
-    connectedPlayers.set(player.id, player);
-    updatePlayersList();
+    const existingLi = document.getElementById(`player-${player.id}`);
+    if (!existingLi) {
+        const li = document.createElement('li');
+        li.id = `player-${player.id}`;
+        li.textContent = player.name;
+        document.getElementById('playersList').appendChild(li);
+    }
 });
 
 socket.on('player-left', (player) => {
-    connectedPlayers.delete(player.id);
-    updatePlayersList();
+    const li = document.getElementById(`player-${player.id}`);
+    if (li) li.remove();
 });
 
 socket.on('player-answered', (data) => {
@@ -90,7 +84,7 @@ function updateAnswersList() {
         div.className = 'player-answer';
         
         let answerStatus = '';
-        if (correctAnswer !== null) {
+        if (answerRevealed && correctAnswer !== null) {
             const isCorrect = answer.answer === correctAnswer;
             answerStatus = `<span class="answer-status ${isCorrect ? 'correct' : 'incorrect'}">
                 ${isCorrect ? '✓' : '✗'}
@@ -138,20 +132,6 @@ socket.on('game-over', (players) => {
     const imageElement = document.getElementById('currentImage');
     imageElement.style.display = 'none';
     imageElement.src = '';
-    
-    // Clear answers but keep player list
-    document.getElementById('answersList').innerHTML = '';
-    playerAnswers.clear();
-    correctAnswer = null;
-});
-
-socket.on('current-players', (players) => {
-    // Update connected players when receiving current state
-    connectedPlayers.clear();
-    players.forEach(player => {
-        connectedPlayers.set(player.id, player);
-    });
-    updatePlayersList();
 });
 
 document.getElementById('startGame').addEventListener('click', () => {

@@ -187,7 +187,7 @@ socket.on('game-over', (players) => {
     const finalScoresDiv = document.createElement('div');
     finalScoresDiv.className = 'final-scores';
     finalScoresDiv.innerHTML = `
-        <h2>Spelet är slut<br>Slutresultat</h2>
+        <h2>Slutresultat</h2>
         <div class="scores-list">
             ${playersToShow.map((p, i) => `
                 ${p.showDivider ? '<div class="score-divider"></div>' : ''}
