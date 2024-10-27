@@ -68,7 +68,6 @@ socket.on('player-welcome', (data) => {
 });
 
 socket.on('game-state', (state) => {
-    console.log('Received game state:', state); // Debug log
     currentQuestionIndex = state.currentQuestionIndex;
     totalScore = state.score;
     hasAnswered = state.hasAnswered;
@@ -117,7 +116,6 @@ function submitAnswer(choice) {
 }
 
 socket.on('new-question', (data) => {
-    console.log('Received new question:', data); // Debug log
     currentQuestionIndex = data.questionNumber - 1;
     hasAnswered = data.hasAnswered || false;
     submittedAnswer = data.answer || null;

@@ -55,6 +55,7 @@ button:disabled {
     padding: 12px;
     background: #1e1e1e;
     border-radius: 8px;
+    width: fit-content;
 }
 
 .game-progress {

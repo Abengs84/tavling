@@ -8,7 +8,6 @@ const playerAnswers = new Map();
 socket.emit('admin-connect');
 
 socket.on('admin-connected', () => {
-    console.log('Connected as admin');
     enableOnlyStartGame();
     // Hide the image element completely
     const imageElement = document.getElementById('currentImage');
@@ -94,7 +93,7 @@ function updateAnswersList() {
         div.innerHTML = `
             <div class="answer-details">
                 <strong>${answer.playerName}</strong>
-                <span class="answer-text">svarade "${answer.answer}"</span>
+                <span class="answer-text"> ${answer.answer}</span>
                 <span class="level-badge">Nivå ${answer.level + 1}</span>
                 ${answerStatus}
             </div>
