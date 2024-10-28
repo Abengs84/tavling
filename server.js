@@ -87,12 +87,38 @@ function sendCurrentGameState(socket, playerName) {
 function sendCurrentPlayers(socket) {
     const players = Array.from(gameState.players.entries()).map(([id, player]) => ({
         id,
-        name: player.name
+        name: player.name,
+        score: player.score || 0
     }));
     socket.emit('current-players', players);
 }
 
+function broadcastScores() {
+    const players = Array.from(gameState.players.entries()).map(([id, player]) => ({
+        id,
+        name: player.name,
+        score: player.score || 0
+    }));
+    io.to('admin').emit('scores-updated', players);
+}
+
 io.on('connection', (socket) => {
+    socket.on('verify-session', (sessionData) => {
+        const playerSession = gameState.playerSessions.get(sessionData.name);
+        const isValid = playerSession !== undefined;
+        socket.emit('session-verified', isValid);
+        
+        if (isValid) {
+            // Auto-reconnect the player
+            playerSession.sessionId = socket.id;
+            gameState.players.set(socket.id, {
+                name: sessionData.name,
+                score: playerSession.score
+            });
+            socket.join('players');
+        }
+    });
+
     socket.on('validate-name', (name) => {
         const validation = validatePlayerName(name);
         socket.emit('name-validation-result', validation);
@@ -107,6 +133,13 @@ io.on('connection', (socket) => {
     });
 
     socket.on('player-connect', (playerData) => {
+        // Check if player has an existing session
+        const existingSession = gameState.playerSessions.get(playerData.name);
+        if (existingSession) {
+            socket.emit('connection-error', 'Du har redan en aktiv session. Vänligen använd den befintliga fliken.');
+            return;
+        }
+
         const validation = validatePlayerName(playerData.name);
         if (!validation.valid) {
             socket.emit('connection-error', validation.error);
@@ -132,7 +165,8 @@ io.on('connection', (socket) => {
 
         io.to('admin').emit('player-joined', {
             id: socket.id,
-            name: playerData.name
+            name: playerData.name,
+            score: 0
         });
 
         emitPlayerCount();
@@ -163,7 +197,8 @@ io.on('connection', (socket) => {
 
             io.to('admin').emit('player-joined', {
                 id: socket.id,
-                name: sessionData.name
+                name: sessionData.name,
+                score: playerSession.score
             });
 
             emitPlayerCount();
@@ -191,6 +226,7 @@ io.on('connection', (socket) => {
         gameState.isGameStarted = true;
         gameState.playerAnswers.clear();
         
+        broadcastScores(); // Broadcast initial scores
         io.emit('game-started');
         
         setTimeout(() => {
@@ -309,6 +345,8 @@ io.on('connection', (socket) => {
                     }
                 });
             }
+
+            broadcastScores(); // Broadcast updated scores after revealing answer
 
             io.emit('answer-revealed', {
                 correctAnswer: gameState.currentQuestion.correctAnswer,

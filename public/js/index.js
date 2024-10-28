@@ -1,7 +1,7 @@
 const socket = io();
 let playerName = '';
 
-// Check URL for error message
+// Check for existing session on page load
 window.onload = function() {
     const urlParams = new URLSearchParams(window.location.search);
     const error = urlParams.get('error');
@@ -9,6 +9,13 @@ window.onload = function() {
         const errorMessage = document.getElementById('errorMessage');
         errorMessage.textContent = decodeURIComponent(error);
         errorMessage.style.display = 'block';
+    }
+
+    // Check for existing session
+    const savedSession = localStorage.getItem('quizSession');
+    if (savedSession) {
+        const sessionData = JSON.parse(savedSession);
+        socket.emit('verify-session', sessionData);
     }
 };
 
@@ -52,6 +59,17 @@ function joinGame() {
         socket.emit('player-connect', { name: nameInput });
     }
 }
+
+socket.on('session-verified', (isValid) => {
+    if (isValid) {
+        // Valid session exists, redirect to game
+        socket.close();
+        window.location.href = '/game.html';
+    } else {
+        // Invalid session, clear it
+        localStorage.removeItem('quizSession');
+    }
+});
 
 socket.on('player-welcome', (data) => {
     playerName = data.name;

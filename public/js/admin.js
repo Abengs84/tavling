@@ -63,12 +63,27 @@ socket.on('new-question', (data) => {
     document.getElementById('nextQuestion').disabled = true;
 });
 
+function updatePlayerList(players) {
+    const playersList = document.getElementById('playersList');
+    playersList.innerHTML = '';
+    players.forEach(player => {
+        const li = document.createElement('li');
+        li.id = `player-${player.id}`;
+        li.innerHTML = `${player.name} <span class="player-score">${player.score} poäng</span>`;
+        playersList.appendChild(li);
+    });
+}
+
+socket.on('current-players', (players) => {
+    updatePlayerList(players);
+});
+
 socket.on('player-joined', (player) => {
     const existingLi = document.getElementById(`player-${player.id}`);
     if (!existingLi) {
         const li = document.createElement('li');
         li.id = `player-${player.id}`;
-        li.textContent = player.name;
+        li.innerHTML = `${player.name} <span class="player-score">${player.score || 0} poäng</span>`;
         document.getElementById('playersList').appendChild(li);
     }
 });
@@ -76,6 +91,10 @@ socket.on('player-joined', (player) => {
 socket.on('player-left', (player) => {
     const li = document.getElementById(`player-${player.id}`);
     if (li) li.remove();
+});
+
+socket.on('scores-updated', (players) => {
+    updatePlayerList(players);
 });
 
 socket.on('player-answered', (data) => {
@@ -136,7 +155,7 @@ socket.on('answer-revealed', (data) => {
 socket.on('game-over', (players) => {
     const sortedPlayers = players.sort((a, b) => b.score - a.score);
     document.getElementById('questionDetails').innerHTML = `
-        <h2>Spelet är slut - Slutresultat</h2>
+        <h2>Slutresultat</h2>
         ${sortedPlayers.map((p, i) => `
             <div>${i + 1}. ${p.name}: ${p.score} poäng</div>
         `).join('')}
