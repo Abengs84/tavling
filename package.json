@@ -1,6 +1,6 @@
 {
   "name": "quiz-game",
-  "version": "1.0.0",
+  "version": "1.0.20",
   "description": "Interactive quiz game with admin control",
   "main": "server.js",
   "scripts": {
