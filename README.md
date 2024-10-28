@@ -1,5 +1,5 @@
 # tavling
-## Web-based real-time 'På spåret' quiz with Node.js
+### Web-based real-time 'På spåret' quiz with Node.js
 
 ### Run server
 
