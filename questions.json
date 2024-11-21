@@ -2,7 +2,7 @@
   "questions": [
     {
       "id": 1,
-      "question": "Vilken ö är detta?",
+      "question": "Jukola evenemanget i Finland är en idrottstävling inom",
       "images": [
         "/images/q1/level1.jpg",
         "/images/q1/level2.jpg",
@@ -10,16 +10,16 @@
         "/images/q1/level4.jpg"
       ],
       "choices": [
-        "Östergrynnan",
-        "Sommarö grund",
-        "Skötgrund",
-        "Ensten"
+        "Friidrott",
+        "Orientering",
+        "Skidning",
+        "Simning"
       ],
-      "correctAnswer": "Ensten"
+      "correctAnswer": "Orientering"
     },
     {
       "id": 2,
-      "question": "Var är detta?",
+      "question": "Antal olika sånger i Julpotpurrin vi hörde var",
       "images": [
         "/images/q2/level1.jpg",
         "/images/q2/level2.jpg",
@@ -27,12 +27,131 @@
         "/images/q2/level4.jpg"
       ],
       "choices": [
-        "Petalax hembygdsmuseum",
-        "Westmanmors stuga",
-        "Stundars museum",
-        "Korsnäs hembygdsmuseum"
+        "2 sånger",
+        "8 sånger",
+        "5 sånger",
+        "11 sånger"
       ],
-      "correctAnswer": "Stundars museum"
+      "correctAnswer": "2 sånger"
+    },
+    {
+      "id": 3,
+      "question": "Kalevalas centrala person är känd för sin poesi och sång. Vad heter personen?",
+      "images": [
+        "/images/q2/level1.jpg",
+        "/images/q2/level2.jpg",
+        "/images/q2/level3.jpg",
+        "/images/q2/level4.jpg"
+      ],
+      "choices": [
+        "Lemminkäinen",
+        "Ilmatar",
+        "Marjatta",
+        "Väinämöinen"
+      ],
+      "correctAnswer": "Väinämöinen"
+    },
+    {
+      "id": 4,
+      "question": "Potatis blev standardfödan i vårt land i slutet av 1800-talet. Före potatisens ankomst åt man kålrötter och vilken annan rotfrukt?",
+      "images": [
+        "/images/q2/level1.jpg",
+        "/images/q2/level2.jpg",
+        "/images/q2/level3.jpg",
+        "/images/q2/level4.jpg"
+      ],
+      "choices": [
+        "Rödbeta",
+        "Palsternacka",
+        "Rova",
+        "Morot"
+      ],
+      "correctAnswer": "Rova"
+    },
+    {
+      "id": 5,
+      "question": "Upp till 18 hunder kan dra en hundspann. Vilken hundras drar troligen spannen i den finländska ödemarken?",
+      "images": [
+        "/images/q2/level1.jpg",
+        "/images/q2/level2.jpg",
+        "/images/q2/level3.jpg",
+        "/images/q2/level4.jpg"
+      ],
+      "choices": [
+        "Terrier",
+        "Husky",
+        "Finsk spets",
+        "Bernardiner"
+      ],
+      "correctAnswer": "Husky"
+    },
+    {
+      "id": 6,
+      "question": "Om du skulle ro rakt västerut från Nykarleby, vilken svenska stad kommer du då till?",
+      "images": [
+        "/images/q2/level1.jpg",
+        "/images/q2/level2.jpg",
+        "/images/q2/level3.jpg",
+        "/images/q2/level4.jpg"
+      ],
+      "choices": [
+        "Örnsköldsvik",
+        "Sundsvall",
+        "Gävle",
+        "Umeå"
+      ],
+      "correctAnswer": "Umeå"
+    },
+    {
+      "id": 7,
+      "question": "I Disneyfilmen Vaiana har ett stort sjömonster tagit Mauis krok. Vilket djur är det glänsande sjömonstret?",
+      "images": [
+        "/images/q2/level1.jpg",
+        "/images/q2/level2.jpg",
+        "/images/q2/level3.jpg",
+        "/images/q2/level4.jpg"
+      ],
+      "choices": [
+        "Krabba",
+        "Kräfta",
+        "Val",
+        "Minion"
+      ],
+      "correctAnswer": "Krabba"
+    },
+    {
+      "id": 8,
+      "question": "Filmen 'Hitta Nemo' handlar om pappa Marvin som söker sin son men vad heter den glömska vännen han finner på vägen?",
+      "images": [
+        "/images/q2/level1.jpg",
+        "/images/q2/level2.jpg",
+        "/images/q2/level3.jpg",
+        "/images/q2/level4.jpg"
+      ],
+      "choices": [
+        "Bruce",
+        "Skum",
+        "Doris",
+        "Gill"
+      ],
+      "correctAnswer": "Doris"
+    },
+    {
+      "id": 9,
+      "question": "Vilken muskel i fiskens huvud anses vara en delikatess?",
+      "images": [
+        "/images/q2/level1.jpg",
+        "/images/q2/level2.jpg",
+        "/images/q2/level3.jpg",
+        "/images/q2/level4.jpg"
+      ],
+      "choices": [
+        "Nacke",
+        "Kind",
+        "Tunga",
+        "Hals"
+      ],
+      "correctAnswer": "Kind"
     }
   ]
 }
