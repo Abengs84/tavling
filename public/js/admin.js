@@ -1,35 +1,21 @@
 const socket = io();
-let currentLevel = 0;
 let gameStarted = false;
 let answerRevealed = false;
 let correctAnswer = null;
 const playerAnswers = new Map();
-
-const STARS_PER_LEVEL = [
-    '★★★★',
-    '★★★✰',
-    '★★✰✰',
-    '★✰✰✰'
-];
 
 socket.emit('admin-connect');
 
 socket.on('admin-connected', () => {
     console.log('Connected as admin');
     enableOnlyStartGame();
-    // Hide the image element completely
-    const imageElement = document.getElementById('currentImage');
-    imageElement.style.display = 'none';
-    imageElement.src = '';
 });
 
 function enableOnlyStartGame() {
     document.getElementById('startGame').disabled = false;
-    document.getElementById('nextLevel').disabled = true;
     document.getElementById('revealAnswer').disabled = true;
     document.getElementById('nextQuestion').disabled = true;
     document.getElementById('answersList').innerHTML = '';
-    document.getElementById('currentStars').textContent = '';
     playerAnswers.clear();
     correctAnswer = null;
     answerRevealed = false;
@@ -48,18 +34,12 @@ socket.on('new-question', (data) => {
             choice === correctAnswer ? `<u>${choice}</u>` : choice
         ).join(', ')}</div>
     `;
-    const imageElement = document.getElementById('currentImage');
-    imageElement.style.display = 'block';
-    imageElement.src = data.image;
     document.getElementById('answersList').innerHTML = '';
-    document.getElementById('currentStars').textContent = STARS_PER_LEVEL[0];
     playerAnswers.clear();
-    currentLevel = 0;
     answerRevealed = false;
     
     document.getElementById('startGame').disabled = true;
-    document.getElementById('nextLevel').disabled = false;
-    document.getElementById('revealAnswer').disabled = true; // Start with reveal disabled
+    document.getElementById('revealAnswer').disabled = false;
     document.getElementById('nextQuestion').disabled = true;
 });
 
@@ -108,11 +88,7 @@ function updateAnswersList() {
     const answersList = document.getElementById('answersList');
     answersList.innerHTML = '';
     
-    // Sort answers by level
-    const sortedAnswers = Array.from(playerAnswers.values())
-        .sort((a, b) => a.level - b.level);
-    
-    sortedAnswers.forEach(answer => {
+    Array.from(playerAnswers.values()).forEach(answer => {
         const div = document.createElement('div');
         div.className = 'player-answer';
         
@@ -128,9 +104,6 @@ function updateAnswersList() {
             <div class="answer-details">
                 <strong>${answer.playerName}</strong>
                 <span class="answer-text"> ${answer.answer}</span>
-                <span class="level-badge">
-                    ${STARS_PER_LEVEL[answer.level]}
-                </span>
                 ${answerStatus}
             </div>
         `;
@@ -140,7 +113,6 @@ function updateAnswersList() {
 
 socket.on('answer-revealed', (data) => {
     answerRevealed = true;
-    document.getElementById('nextLevel').disabled = true;
     document.getElementById('revealAnswer').disabled = true;
     document.getElementById('nextQuestion').disabled = false;
     
@@ -162,32 +134,11 @@ socket.on('game-over', (players) => {
     `;
     enableOnlyStartGame();
     document.getElementById('nextQuestion').textContent = 'Nästa fråga';
-    // Hide the image element completely when game is over
-    const imageElement = document.getElementById('currentImage');
-    imageElement.style.display = 'none';
-    imageElement.src = '';
 });
 
 document.getElementById('startGame').addEventListener('click', () => {
     socket.emit('start-game');
     gameStarted = true;
-});
-
-document.getElementById('nextLevel').addEventListener('click', () => {
-    if (currentLevel < 3 && !answerRevealed) {
-        currentLevel++;
-        socket.emit('next-level');
-        const currentSrc = document.getElementById('currentImage').src;
-        const nextImageNumber = currentLevel + 1;
-        document.getElementById('currentImage').src = currentSrc.replace(/level\d\.jpg/, `level${nextImageNumber}.jpg`);
-        document.getElementById('currentStars').textContent = STARS_PER_LEVEL[currentLevel];
-        
-        // Enable reveal answer only when all levels have been shown
-        if (currentLevel === 3) {
-            document.getElementById('nextLevel').disabled = true;
-            document.getElementById('revealAnswer').disabled = false;
-        }
-    }
 });
 
 document.getElementById('revealAnswer').addEventListener('click', () => {

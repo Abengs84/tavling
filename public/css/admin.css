@@ -66,7 +66,7 @@ body {
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr;
     gap: 20px;
 }
 
@@ -80,16 +80,6 @@ body {
     width: 100%;
 }
 
-.current-stars {
-    color: #FFD700;
-    font-size: 24px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    letter-spacing: 2px;
-    text-align: center;
-    margin: 10px 0;
-    transform: translateY(-69px);
-}
-
 .game-progress {
     font-size: 1.2em;
     margin-bottom: 15px;
@@ -99,17 +89,6 @@ body {
 .question-text {
     font-size: 1.3em;
     margin-bottom: 10px;
-}
-
-.current-image {
-    margin: 15px 0;
-    text-align: center;
-}
-
-#currentImage {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
 }
 
 .answers-section {
@@ -153,22 +132,6 @@ body {
     color: #e0e0e0;
 }
 
-.level-badge {
-    background: #2196F3;
-    color: white;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.9em;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.level-badge .stars {
-    color: #FFD700;
-    letter-spacing: 1px;
-}
-
 .answer-status {
     margin-left: auto;
     padding: 4px 8px;
@@ -200,10 +163,6 @@ body {
 
 @media (max-width: 900px) {
     .admin-layout {
-        grid-template-columns: 1fr;
-    }
-    
-    .question-info {
         grid-template-columns: 1fr;
     }
     

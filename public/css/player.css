@@ -28,61 +28,6 @@ body {
     padding: 8px 0;
 }
 
-/* Level indicator with stars and points */
-.level-indicator {
-    position: fixed;
-    bottom: -22px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    z-index: 100;
-}
-
-.stars-container {
-    color: #FFD700;
-    background: #2196F3;
-    font-size: 16px;
-    border-radius: 8px;
-    width: 76px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    letter-spacing: 1px;
-    transform: translateY(12px);
-}
-
-.points-indicator {
-    width: 100px;
-    height: 69px;
-    background: #2196F3;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 30px;
-    font-weight: bold;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-.stars-container, #results .stars {
-    font-family: Arial, sans-serif; /* Ensure consistent star rendering */
-}
-
-/* Image container and results positioning */
-.image-container {
-    margin: 8px auto;
-    max-width: 600px;
-    position: relative;
-}
-
-.image-container img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-    max-height: 260px;
-}
-
 #results {
     position: absolute;
     top: 50%;
@@ -198,22 +143,9 @@ body {
     display: none;
 }
 
-#results .stars {
-    display: inline-block;
-    color: #FFD700;
-    font-size: 1.2em;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    letter-spacing: 1px;
-    margin: 5px 0;
-}
-
 #loginScreen {
     display: block;
     padding-top: 40px;
-}
-
-.stars-container:not(:empty), #results .stars:not(:empty) {
-    letter-spacing: 2px; /* Slightly more spacing for better readability */
 }
 
 #gameScreen {
@@ -332,7 +264,7 @@ input[type="text"]:focus {
     .welcome-message {
         padding: 15px;
         margin: 15px;
-}
+    }
 
     .welcome-message h2 {
         font-size: 1.3em;

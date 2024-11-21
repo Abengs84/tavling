@@ -6,21 +6,19 @@ const path = require('path');
 const fs = require('fs');
 
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/images', express.static(path.join(__dirname, 'images')));
 
 const gameState = {
     questions: [],
     currentQuestionIndex: -1,
     currentQuestion: null,
-    currentLevel: 0,
     players: new Map(), // Map<socketId, {name, score}>
-    playerAnswers: new Map(), // Map<questionIndex, Map<playerName, {answer, level}>>
+    playerAnswers: new Map(), // Map<questionIndex, Map<playerName, {answer}>
     isGameStarted: false,
     adminSocket: null,
     playerSessions: new Map() // Map<name, {sessionId, score}>
 };
 
-const POINTS_PER_LEVEL = [10, 8, 6, 4];
+const POINTS_FOR_CORRECT = 10;
 
 function validatePlayerName(name) {
     if (name.length < 3) {
@@ -74,8 +72,6 @@ function sendCurrentGameState(socket, playerName) {
             questionNumber: gameState.currentQuestionIndex + 1,
             totalQuestions: gameState.questions.length,
             questionText: gameState.currentQuestion.question,
-            currentLevel: gameState.currentLevel,
-            image: gameState.currentQuestion.images[gameState.currentLevel],
             choices: gameState.currentQuestion.choices,
             hasAnswered: hasAnswered,
             answer: playerAnswer?.answer || null,
@@ -236,7 +232,6 @@ io.on('connection', (socket) => {
 
     function startNewQuestion() {
         gameState.currentQuestion = gameState.questions[gameState.currentQuestionIndex];
-        gameState.currentLevel = 0;
         gameState.playerAnswers.set(gameState.currentQuestionIndex, new Map());
 
         // Send data with correct answer to admin
@@ -244,8 +239,6 @@ io.on('connection', (socket) => {
             questionNumber: gameState.currentQuestionIndex + 1,
             totalQuestions: gameState.questions.length,
             questionText: gameState.currentQuestion.question,
-            level: 0,
-            image: gameState.currentQuestion.images[0],
             choices: gameState.currentQuestion.choices,
             correctAnswer: gameState.currentQuestion.correctAnswer
         });
@@ -255,8 +248,6 @@ io.on('connection', (socket) => {
             questionNumber: gameState.currentQuestionIndex + 1,
             totalQuestions: gameState.questions.length,
             questionText: gameState.currentQuestion.question,
-            level: 0,
-            image: gameState.currentQuestion.images[0],
             choices: gameState.currentQuestion.choices
         });
     }
@@ -274,16 +265,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('next-level', () => {
-        if (gameState.currentQuestion && gameState.currentLevel < 3) {
-            gameState.currentLevel++;
-            io.to('players').emit('show-level', {
-                level: gameState.currentLevel,
-                image: gameState.currentQuestion.images[gameState.currentLevel]
-            });
-        }
-    });
-
     socket.on('submit-answer', (answer) => {
         const player = gameState.players.get(socket.id);
         if (!player) return;
@@ -294,22 +275,15 @@ io.on('connection', (socket) => {
         }
 
         const questionAnswers = gameState.playerAnswers.get(gameState.currentQuestionIndex);
-        questionAnswers.set(player.name, {
-            answer: answer,
-            level: gameState.currentLevel
-        });
+        questionAnswers.set(player.name, { answer: answer });
 
         io.to('admin').emit('player-answered', {
             playerId: socket.id,
             playerName: player.name,
-            level: gameState.currentLevel,
             answer: answer
         });
 
-        socket.emit('answer-confirmed', {
-            answer: answer,
-            level: gameState.currentLevel
-        });
+        socket.emit('answer-confirmed', { answer: answer });
     });
 
     socket.on('reveal-answer', () => {
@@ -320,7 +294,7 @@ io.on('connection', (socket) => {
             if (questionAnswers) {
                 questionAnswers.forEach((answerData, playerName) => {
                     const isCorrect = answerData.answer === gameState.currentQuestion.correctAnswer;
-                    const points = isCorrect ? POINTS_PER_LEVEL[answerData.level] : 0;
+                    const points = isCorrect ? POINTS_FOR_CORRECT : 0;
                     
                     const playerEntry = Array.from(gameState.players.entries())
                         .find(([_, p]) => p.name === playerName);
@@ -339,8 +313,7 @@ io.on('connection', (socket) => {
                             answer: answerData.answer,
                             correct: isCorrect,
                             points: points,
-                            totalScore: player.score,
-                            answeredAtLevel: answerData.level + 1
+                            totalScore: player.score
                         });
                     }
                 });

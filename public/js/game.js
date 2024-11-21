@@ -6,13 +6,6 @@ let sessionId = '';
 let currentQuestionIndex = -1;
 let submittedAnswer = null;
 
-const POINTS_PER_LEVEL = [10, 8, 6, 4];
-const STARS_PER_LEVEL = [
-    '★★★★',
-    '★★★✰',
-    '★★✰✰',
-    '★✰✰✰'
-];
 const TOP_PLAYERS_TO_SHOW = 5;
 
 // Check for existing session and reconnect
@@ -28,13 +21,6 @@ window.onload = function() {
         window.location.href = '/index.html';
     }
 };
-
-function updateLevelIndicator(level) {
-    const pointsIndicator = document.getElementById('pointsIndicator');
-    const starsContainer = document.getElementById('starsContainer');
-    pointsIndicator.textContent = POINTS_PER_LEVEL[level];
-    starsContainer.textContent = STARS_PER_LEVEL[level];
-}
 
 function updateChoicesDisplay(choices, hasAnswered, submittedAnswer) {
     const choicesContainer = document.getElementById('choices');
@@ -64,7 +50,7 @@ socket.on('player-welcome', (data) => {
     submittedAnswer = data.submittedAnswer || null;
     
     document.getElementById('score').textContent = `Poäng: ${totalScore}`;
-    document.getElementById('gameScreen').style.display = 'block'; // Ensure game screen is visible
+    document.getElementById('gameScreen').style.display = 'block';
 });
 
 socket.on('game-state', (state) => {
@@ -73,11 +59,9 @@ socket.on('game-state', (state) => {
     hasAnswered = state.hasAnswered;
     submittedAnswer = state.answer;
 
-    document.getElementById('gameScreen').style.display = 'block'; // Ensure game screen is visible
+    document.getElementById('gameScreen').style.display = 'block';
     document.getElementById('score').textContent = `Poäng: ${totalScore}`;
     
-    updateLevelIndicator(state.currentLevel);
-    document.getElementById('questionImage').src = state.image;
     document.getElementById('questionText').textContent = state.questionText;
     document.getElementById('gameProgress').textContent = 
         `Fråga ${state.questionNumber} av ${state.totalQuestions}`;
@@ -120,9 +104,7 @@ socket.on('new-question', (data) => {
     hasAnswered = data.hasAnswered || false;
     submittedAnswer = data.answer || null;
     
-    document.getElementById('gameScreen').style.display = 'block'; // Ensure game screen is visible
-    updateLevelIndicator(0); // Start at level 1 (index 0)
-    document.getElementById('questionImage').src = data.image;
+    document.getElementById('gameScreen').style.display = 'block';
     document.getElementById('questionText').textContent = data.questionText;
     document.getElementById('results').innerHTML = '';
     document.getElementById('results').style.display = 'none';
@@ -130,11 +112,6 @@ socket.on('new-question', (data) => {
         `Fråga ${data.questionNumber} av ${data.totalQuestions}`;
     
     updateChoicesDisplay(data.choices, hasAnswered, submittedAnswer);
-});
-
-socket.on('show-level', (data) => {
-    updateLevelIndicator(data.level);
-    document.getElementById('questionImage').src = data.image;
 });
 
 socket.on('answer-revealed', (data) => {
@@ -153,12 +130,8 @@ socket.on('answer-revealed', (data) => {
     } else {
         resultContent += `<p>Du svarade ${playerResult.correct ? 'rätt' : 'fel'}!`;
         
-        // Only show player's answer if they were wrong
         if (!playerResult.correct) {
             resultContent += `<br>Ditt svar: ${playerResult.answer}`;
-        } else {
-            // Only show stars if they were correct
-            resultContent += `<br><span class="stars">${STARS_PER_LEVEL[playerResult.answeredAtLevel - 1]}</span>`;
         }
         
         resultContent += `<br>Poäng: ${playerResult.points}</p>`;
@@ -187,10 +160,8 @@ socket.on('game-over', (players) => {
     }
     
     // Hide game elements
-    document.getElementById('questionImage').style.display = 'none';
     document.getElementById('choices').style.display = 'none';
     document.getElementById('gameProgress').style.display = 'none';
-    document.querySelector('.level-indicator').style.display = 'none';
     
     // Create a new container for final scores
     const gameScreen = document.getElementById('gameScreen');

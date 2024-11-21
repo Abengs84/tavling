@@ -3,12 +3,6 @@
     {
       "id": 1,
       "question": "Jukola evenemanget i Finland är en idrottstävling inom",
-      "images": [
-        "/images/q1/level1.jpg",
-        "/images/q1/level2.jpg",
-        "/images/q1/level3.jpg",
-        "/images/q1/level4.jpg"
-      ],
       "choices": [
         "Friidrott",
         "Orientering",
@@ -20,12 +14,6 @@
     {
       "id": 2,
       "question": "Antal olika sånger i Julpotpurrin vi hörde var",
-      "images": [
-        "/images/q2/level1.jpg",
-        "/images/q2/level2.jpg",
-        "/images/q2/level3.jpg",
-        "/images/q2/level4.jpg"
-      ],
       "choices": [
         "2 sånger",
         "8 sånger",
@@ -37,12 +25,6 @@
     {
       "id": 3,
       "question": "Kalevalas centrala person är känd för sin poesi och sång. Vad heter personen?",
-      "images": [
-        "/images/q2/level1.jpg",
-        "/images/q2/level2.jpg",
-        "/images/q2/level3.jpg",
-        "/images/q2/level4.jpg"
-      ],
       "choices": [
         "Lemminkäinen",
         "Ilmatar",
@@ -54,12 +36,6 @@
     {
       "id": 4,
       "question": "Potatis blev standardfödan i vårt land i slutet av 1800-talet. Före potatisens ankomst åt man kålrötter och vilken annan rotfrukt?",
-      "images": [
-        "/images/q2/level1.jpg",
-        "/images/q2/level2.jpg",
-        "/images/q2/level3.jpg",
-        "/images/q2/level4.jpg"
-      ],
       "choices": [
         "Rödbeta",
         "Palsternacka",
@@ -71,12 +47,6 @@
     {
       "id": 5,
       "question": "Upp till 18 hunder kan dra en hundspann. Vilken hundras drar troligen spannen i den finländska ödemarken?",
-      "images": [
-        "/images/q2/level1.jpg",
-        "/images/q2/level2.jpg",
-        "/images/q2/level3.jpg",
-        "/images/q2/level4.jpg"
-      ],
       "choices": [
         "Terrier",
         "Husky",
@@ -88,12 +58,6 @@
     {
       "id": 6,
       "question": "Om du skulle ro rakt västerut från Nykarleby, vilken svenska stad kommer du då till?",
-      "images": [
-        "/images/q2/level1.jpg",
-        "/images/q2/level2.jpg",
-        "/images/q2/level3.jpg",
-        "/images/q2/level4.jpg"
-      ],
       "choices": [
         "Örnsköldsvik",
         "Sundsvall",
@@ -105,12 +69,6 @@
     {
       "id": 7,
       "question": "I Disneyfilmen Vaiana har ett stort sjömonster tagit Mauis krok. Vilket djur är det glänsande sjömonstret?",
-      "images": [
-        "/images/q2/level1.jpg",
-        "/images/q2/level2.jpg",
-        "/images/q2/level3.jpg",
-        "/images/q2/level4.jpg"
-      ],
       "choices": [
         "Krabba",
         "Kräfta",
@@ -122,12 +80,6 @@
     {
       "id": 8,
       "question": "Filmen 'Hitta Nemo' handlar om pappa Marvin som söker sin son men vad heter den glömska vännen han finner på vägen?",
-      "images": [
-        "/images/q2/level1.jpg",
-        "/images/q2/level2.jpg",
-        "/images/q2/level3.jpg",
-        "/images/q2/level4.jpg"
-      ],
       "choices": [
         "Bruce",
         "Skum",
@@ -139,12 +91,6 @@
     {
       "id": 9,
       "question": "Vilken muskel i fiskens huvud anses vara en delikatess?",
-      "images": [
-        "/images/q2/level1.jpg",
-        "/images/q2/level2.jpg",
-        "/images/q2/level3.jpg",
-        "/images/q2/level4.jpg"
-      ],
       "choices": [
         "Nacke",
         "Kind",
