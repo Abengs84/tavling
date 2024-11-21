@@ -7,6 +7,8 @@ const fs = require('fs');
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+const QUESTION_TIMER = 30; // 30 seconds per question
+
 const gameState = {
     questions: [],
     currentQuestionIndex: -1,
@@ -15,7 +17,10 @@ const gameState = {
     playerAnswers: new Map(), // Map<questionIndex, Map<playerName, {answer}>
     isGameStarted: false,
     adminSocket: null,
-    playerSessions: new Map() // Map<name, {sessionId, score}>
+    playerSessions: new Map(), // Map<name, {sessionId, score}>
+    timerInterval: null,
+    timerStartTime: null,  // Track when timer started
+    timeLeft: QUESTION_TIMER  // Track remaining time
 };
 
 const POINTS_FOR_CORRECT = 10;
@@ -24,11 +29,9 @@ function validatePlayerName(name) {
     if (name.length < 3) {
         return { valid: false, error: 'Namnet måste vara minst 3 tecken långt' };
     }
-    // Updated regex to allow Swedish characters
     if (!/^[a-zA-ZåäöÅÄÖ0-9 ]+$/.test(name)) {
         return { valid: false, error: 'Namnet får endast innehålla bokstäver, siffror och mellanslag' };
     }
-    // Check if name is taken by an active player (not just in sessions)
     const existingNames = Array.from(gameState.players.values()).map(p => p.name.toLowerCase());
     if (existingNames.includes(name.toLowerCase())) {
         return { valid: false, error: 'Detta namn är redan taget' };
@@ -62,11 +65,53 @@ function emitPlayerCount() {
     io.emit('players-updated', gameState.players.size);
 }
 
+function startTimer() {
+    gameState.timerStartTime = Date.now();
+    gameState.timeLeft = QUESTION_TIMER;
+    io.emit('timer-start', QUESTION_TIMER);
+    
+    if (gameState.timerInterval) {
+        clearInterval(gameState.timerInterval);
+    }
+    
+    gameState.timerInterval = setInterval(() => {
+        gameState.timeLeft--;
+        io.emit('timer-tick', gameState.timeLeft);
+        
+        if (gameState.timeLeft <= 0) {
+            clearInterval(gameState.timerInterval);
+            io.emit('timer-end');
+            // Auto-reveal answer when time is up
+            setTimeout(() => {
+                io.to('admin').emit('time-up');
+            }, 1000);
+        }
+    }, 1000);
+}
+
+function getCurrentTimerState() {
+    if (!gameState.timerStartTime || !gameState.isGameStarted) {
+        return null;
+    }
+    
+    const elapsed = Math.floor((Date.now() - gameState.timerStartTime) / 1000);
+    const remaining = Math.max(0, QUESTION_TIMER - elapsed);
+    
+    return {
+        timeLeft: remaining,
+        totalTime: QUESTION_TIMER
+    };
+}
+
 function sendCurrentGameState(socket, playerName) {
     if (gameState.isGameStarted && gameState.currentQuestion) {
         const playerAnswer = getPlayerAnswer(playerName);
         const hasAnswered = !!playerAnswer;
         const player = gameState.players.get(socket.id);
+        
+        // Get current timer state
+        const timerState = getCurrentTimerState();
+        
         socket.emit('game-state', {
             currentQuestionIndex: gameState.currentQuestionIndex,
             questionNumber: gameState.currentQuestionIndex + 1,
@@ -75,7 +120,8 @@ function sendCurrentGameState(socket, playerName) {
             choices: gameState.currentQuestion.choices,
             hasAnswered: hasAnswered,
             answer: playerAnswer?.answer || null,
-            score: player?.score || 0
+            score: player?.score || 0,
+            timerState: timerState
         });
     }
 }
@@ -105,7 +151,6 @@ io.on('connection', (socket) => {
         socket.emit('session-verified', isValid);
         
         if (isValid) {
-            // Auto-reconnect the player
             playerSession.sessionId = socket.id;
             gameState.players.set(socket.id, {
                 name: sessionData.name,
@@ -126,10 +171,15 @@ io.on('connection', (socket) => {
         gameState.questions = loadQuestions();
         socket.emit('admin-connected');
         sendCurrentPlayers(socket);
+        
+        // Send current timer state if game is in progress
+        const timerState = getCurrentTimerState();
+        if (timerState) {
+            socket.emit('timer-sync', timerState);
+        }
     });
 
     socket.on('player-connect', (playerData) => {
-        // Check if player has an existing session
         const existingSession = gameState.playerSessions.get(playerData.name);
         if (existingSession) {
             socket.emit('connection-error', 'Du har redan en aktiv session. Vänligen använd den befintliga fliken.');
@@ -222,7 +272,7 @@ io.on('connection', (socket) => {
         gameState.isGameStarted = true;
         gameState.playerAnswers.clear();
         
-        broadcastScores(); // Broadcast initial scores
+        broadcastScores();
         io.emit('game-started');
         
         setTimeout(() => {
@@ -234,7 +284,6 @@ io.on('connection', (socket) => {
         gameState.currentQuestion = gameState.questions[gameState.currentQuestionIndex];
         gameState.playerAnswers.set(gameState.currentQuestionIndex, new Map());
 
-        // Send data with correct answer to admin
         io.to('admin').emit('new-question', {
             questionNumber: gameState.currentQuestionIndex + 1,
             totalQuestions: gameState.questions.length,
@@ -243,16 +292,21 @@ io.on('connection', (socket) => {
             correctAnswer: gameState.currentQuestion.correctAnswer
         });
 
-        // Send data without correct answer to players
         io.to('players').emit('new-question', {
             questionNumber: gameState.currentQuestionIndex + 1,
             totalQuestions: gameState.questions.length,
             questionText: gameState.currentQuestion.question,
             choices: gameState.currentQuestion.choices
         });
+
+        startTimer();
     }
 
     socket.on('next-question', () => {
+        if (gameState.timerInterval) {
+            clearInterval(gameState.timerInterval);
+        }
+        
         gameState.currentQuestionIndex++;
         if (gameState.currentQuestionIndex < gameState.questions.length) {
             startNewQuestion();
@@ -261,6 +315,7 @@ io.on('connection', (socket) => {
             gameState.isGameStarted = false;
             gameState.playerAnswers.clear();
             gameState.playerSessions.clear();
+            gameState.timerStartTime = null;
             io.emit('game-ended');
         }
     });
@@ -287,6 +342,10 @@ io.on('connection', (socket) => {
     });
 
     socket.on('reveal-answer', () => {
+        if (gameState.timerInterval) {
+            clearInterval(gameState.timerInterval);
+        }
+        
         if (gameState.currentQuestion) {
             const results = [];
             const questionAnswers = gameState.playerAnswers.get(gameState.currentQuestionIndex);
@@ -319,7 +378,7 @@ io.on('connection', (socket) => {
                 });
             }
 
-            broadcastScores(); // Broadcast updated scores after revealing answer
+            broadcastScores();
 
             io.emit('answer-revealed', {
                 correctAnswer: gameState.currentQuestion.correctAnswer,

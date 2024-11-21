@@ -42,6 +42,27 @@ function updateChoicesDisplay(choices, hasAnswered, submittedAnswer) {
     });
 }
 
+function updateTimerBar(timeLeft, totalTime) {
+    const timerBar = document.getElementById('timerBar');
+    
+    // Reset the timer bar
+    timerBar.style.transition = 'none';
+    timerBar.style.width = '100%';
+    
+    // Force a reflow
+    timerBar.offsetHeight;
+    
+    // Start the countdown animation
+    if (timeLeft > 0) {
+        requestAnimationFrame(() => {
+            timerBar.style.transition = `width ${timeLeft}s linear`;
+            timerBar.style.width = '0%';
+        });
+    } else {
+        timerBar.style.width = '0%';
+    }
+}
+
 socket.on('player-welcome', (data) => {
     playerName = data.name;
     sessionId = data.sessionId;
@@ -67,6 +88,27 @@ socket.on('game-state', (state) => {
         `Fråga ${state.questionNumber} av ${state.totalQuestions}`;
     
     updateChoicesDisplay(state.choices, hasAnswered, submittedAnswer);
+
+    // Handle timer state if provided
+    if (state.timerState) {
+        updateTimerBar(state.timerState.timeLeft, state.timerState.totalTime);
+    }
+});
+
+socket.on('timer-start', (timeLeft) => {
+    updateTimerBar(timeLeft, timeLeft);
+});
+
+socket.on('timer-sync', (timerState) => {
+    updateTimerBar(timerState.timeLeft, timerState.totalTime);
+});
+
+socket.on('timer-end', () => {
+    if (!hasAnswered) {
+        document.querySelectorAll('.choice-button').forEach(btn => {
+            btn.disabled = true;
+        });
+    }
 });
 
 socket.on('connection-error', function(error) {

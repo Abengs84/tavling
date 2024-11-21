@@ -16,7 +16,7 @@ body {
 /* Repositioned score */
 #score {
     position: absolute;
-    top: -7px;
+    top: 6px;
     right: 20px;
     font-weight: bold;
     color: white;

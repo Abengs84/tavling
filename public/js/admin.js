@@ -21,6 +21,43 @@ function enableOnlyStartGame() {
     answerRevealed = false;
 }
 
+function updateTimerBar(timeLeft, totalTime) {
+    const timerBar = document.getElementById('timerBar');
+    
+    // Reset the timer bar
+    timerBar.style.transition = 'none';
+    timerBar.style.width = '100%';
+    
+    // Force a reflow
+    timerBar.offsetHeight;
+    
+    // Start the countdown animation
+    if (timeLeft > 0) {
+        requestAnimationFrame(() => {
+            timerBar.style.transition = `width ${timeLeft}s linear`;
+            timerBar.style.width = '0%';
+        });
+    } else {
+        timerBar.style.width = '0%';
+    }
+}
+
+socket.on('timer-start', (timeLeft) => {
+    updateTimerBar(timeLeft, timeLeft);
+});
+
+socket.on('timer-sync', (timerState) => {
+    updateTimerBar(timerState.timeLeft, timerState.totalTime);
+});
+
+socket.on('timer-end', () => {
+    document.getElementById('revealAnswer').disabled = false;
+});
+
+socket.on('time-up', () => {
+    socket.emit('reveal-answer');
+});
+
 socket.on('new-question', (data) => {
     document.getElementById('gameProgress').textContent = 
         `Fråga ${data.questionNumber} av ${data.totalQuestions}`;
@@ -39,7 +76,7 @@ socket.on('new-question', (data) => {
     answerRevealed = false;
     
     document.getElementById('startGame').disabled = true;
-    document.getElementById('revealAnswer').disabled = false;
+    document.getElementById('revealAnswer').disabled = true;
     document.getElementById('nextQuestion').disabled = true;
 });
 
