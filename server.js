@@ -5,6 +5,11 @@ const io = require('socket.io')(http);
 const path = require('path');
 const fs = require('fs');
 
+app.use((req, res, next) => {
+    console.log(`[DEBUG] Requesting: ${req.path}`);
+    next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 const QUESTION_TIMER = 30; // 30 seconds per question
@@ -103,11 +108,11 @@ function getCurrentTimerState() {
     };
 }
 
-function sendCurrentGameState(socket, playerName) {
+function sendCurrentGameState(socket, playerName = null) {
     if (gameState.isGameStarted && gameState.currentQuestion) {
-        const playerAnswer = getPlayerAnswer(playerName);
+        const playerAnswer = playerName ? getPlayerAnswer(playerName) : null;
         const hasAnswered = !!playerAnswer;
-        const player = gameState.players.get(socket.id);
+        const player = playerName ? gameState.players.get(socket.id) : null;
         
         // Get current timer state
         const timerState = getCurrentTimerState();
@@ -145,6 +150,16 @@ function broadcastScores() {
 }
 
 io.on('connection', (socket) => {
+    console.log('[DEBUG] New socket connection');
+
+    socket.on('spectator-join', () => {
+        console.log('[DEBUG] Spectator joined');
+        socket.join('spectators');
+        if (gameState.isGameStarted) {
+            sendCurrentGameState(socket);
+        }
+    });
+
     socket.on('verify-session', (sessionData) => {
         const playerSession = gameState.playerSessions.get(sessionData.name);
         const isValid = playerSession !== undefined;
@@ -292,12 +307,15 @@ io.on('connection', (socket) => {
             correctAnswer: gameState.currentQuestion.correctAnswer
         });
 
-        io.to('players').emit('new-question', {
+        const questionData = {
             questionNumber: gameState.currentQuestionIndex + 1,
             totalQuestions: gameState.questions.length,
             questionText: gameState.currentQuestion.question,
             choices: gameState.currentQuestion.choices
-        });
+        };
+
+        io.to('players').emit('new-question', questionData);
+        io.to('spectators').emit('new-question', questionData);
 
         startTimer();
     }
@@ -311,7 +329,8 @@ io.on('connection', (socket) => {
         if (gameState.currentQuestionIndex < gameState.questions.length) {
             startNewQuestion();
         } else {
-            io.emit('game-over', Array.from(gameState.players.values()));
+            const finalPlayers = Array.from(gameState.players.values());
+            io.emit('game-over', finalPlayers);
             gameState.isGameStarted = false;
             gameState.playerAnswers.clear();
             gameState.playerSessions.clear();
@@ -342,8 +361,11 @@ io.on('connection', (socket) => {
     });
 
     socket.on('reveal-answer', () => {
+        // Clear timer interval if it's still running
         if (gameState.timerInterval) {
             clearInterval(gameState.timerInterval);
+            gameState.timerInterval = null;
+            io.emit('timer-end');
         }
         
         if (gameState.currentQuestion) {

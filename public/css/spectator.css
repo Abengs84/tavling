@@ -1,0 +1,153 @@
+body {
+    margin: 0;
+    padding: 0;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-size: 24px;
+}
+
+#spectatorScreen {
+    width: 1920px;
+    height: 1080px;
+    background: #1a1a1a;
+    position: relative;
+    overflow: hidden;
+    color: white;
+    padding: 2rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.game-header {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 2rem;
+}
+
+.timer-container {
+    width: 100%;
+    height: 20px;
+    background: #333;
+    margin-bottom: 2rem;
+}
+
+.timer-bar {
+    height: 100%;
+    width: 100%;
+    background: #4CAF50;
+    transition: width linear;
+}
+
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.question-text {
+    font-size: 3rem;
+    text-align: center;
+    margin-bottom: 2rem;
+    min-height: 120px;
+}
+
+.choices-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.choice-button {
+    background: #2c3e50;
+    border: none;
+    padding: 2rem;
+    color: white;
+    font-size: 2rem;
+    border-radius: 10px;
+    cursor: default;
+    transition: background-color 0.3s;
+}
+
+.choice-button.correct {
+    background: #27ae60;
+    border: 2px solid #2ecc71;
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
+}
+
+.choice-button.incorrect {
+    background: #c0392b;
+    opacity: 0.7;
+}
+
+#results {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+#correctAnswer {
+    font-size: 2rem;
+    color: #2ecc71;
+    margin-bottom: 2rem;
+}
+
+#correctAnswer h2 {
+    color: #2ecc71;
+    margin: 0;
+    padding: 1rem;
+    border-radius: 8px;
+    background: rgba(46, 204, 113, 0.1);
+    display: inline-block;
+}
+
+#leaderboard {
+    margin-top: 2rem;
+    padding: 1rem;
+    background: rgba(44, 62, 80, 0.5);
+    border-radius: 10px;
+}
+
+#leaderboard h2 {
+    color: #3498db;
+    margin-bottom: 1.5rem;
+}
+
+.leaderboard-entry {
+    display: grid;
+    grid-template-columns: 100px 1fr 200px;
+    width: 80%;
+    margin: 0.5rem auto;
+    padding: 1rem;
+    background: rgba(52, 152, 219, 0.1);
+    border-radius: 8px;
+    font-size: 1.5rem;
+    align-items: center;
+}
+
+.leaderboard-position {
+    font-weight: bold;
+    color: #3498db;
+}
+
+.leaderboard-name {
+    text-align: left;
+    padding-left: 2rem;
+}
+
+.leaderboard-score {
+    text-align: right;
+    padding-right: 2rem;
+    color: #2ecc71;
+}
+
+@media (max-width: 1920px) {
+    #spectatorScreen {
+        transform: scale(0.8);
+        transform-origin: center center;
+    }
+}

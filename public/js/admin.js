@@ -42,15 +42,29 @@ function updateTimerBar(timeLeft, totalTime) {
     }
 }
 
+function stopTimer() {
+    const timerBar = document.getElementById('timerBar');
+    const currentWidth = getComputedStyle(timerBar).width;
+    timerBar.style.transition = 'none';
+    timerBar.style.width = currentWidth;
+}
+
 socket.on('timer-start', (timeLeft) => {
     updateTimerBar(timeLeft, timeLeft);
+    // Enable reveal answer button as soon as the timer starts
+    document.getElementById('revealAnswer').disabled = false;
 });
 
 socket.on('timer-sync', (timerState) => {
     updateTimerBar(timerState.timeLeft, timerState.totalTime);
+    // Enable reveal answer button if timer is running
+    if (timerState.timeLeft > 0) {
+        document.getElementById('revealAnswer').disabled = false;
+    }
 });
 
 socket.on('timer-end', () => {
+    stopTimer();
     document.getElementById('revealAnswer').disabled = false;
 });
 
@@ -76,8 +90,9 @@ socket.on('new-question', (data) => {
     answerRevealed = false;
     
     document.getElementById('startGame').disabled = true;
-    document.getElementById('revealAnswer').disabled = true;
     document.getElementById('nextQuestion').disabled = true;
+    // Don't disable reveal answer button, allow admin to reveal at any time
+    document.getElementById('revealAnswer').disabled = false;
 });
 
 function updatePlayerList(players) {
@@ -149,6 +164,7 @@ function updateAnswersList() {
 }
 
 socket.on('answer-revealed', (data) => {
+    stopTimer();
     answerRevealed = true;
     document.getElementById('revealAnswer').disabled = true;
     document.getElementById('nextQuestion').disabled = false;
@@ -179,6 +195,7 @@ document.getElementById('startGame').addEventListener('click', () => {
 });
 
 document.getElementById('revealAnswer').addEventListener('click', () => {
+    stopTimer();
     socket.emit('reveal-answer');
 });
 

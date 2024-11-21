@@ -63,6 +63,13 @@ function updateTimerBar(timeLeft, totalTime) {
     }
 }
 
+function stopTimer() {
+    const timerBar = document.getElementById('timerBar');
+    const currentWidth = getComputedStyle(timerBar).width;
+    timerBar.style.transition = 'none';
+    timerBar.style.width = currentWidth;
+}
+
 socket.on('player-welcome', (data) => {
     playerName = data.name;
     sessionId = data.sessionId;
@@ -104,6 +111,7 @@ socket.on('timer-sync', (timerState) => {
 });
 
 socket.on('timer-end', () => {
+    stopTimer();
     if (!hasAnswered) {
         document.querySelectorAll('.choice-button').forEach(btn => {
             btn.disabled = true;
@@ -157,6 +165,9 @@ socket.on('new-question', (data) => {
 });
 
 socket.on('answer-revealed', (data) => {
+    // Stop the timer animation
+    stopTimer();
+
     // Disable all choice buttons
     document.querySelectorAll('.choice-button').forEach(btn => {
         btn.disabled = true;
