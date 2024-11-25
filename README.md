@@ -18,7 +18,6 @@ A real-time quiz application with admin control, player participation, and spect
 - Answer questions within time limit
 - See confirmation when time runs out
 - View final scores at game end
-- See final ranking
 
 ### Spectator View
 - Watch quiz in real-time on a 1080p display (16:9)
@@ -115,9 +114,6 @@ Example format:
 
 ### Final Results
 - Complete scores shown only at game end
-- Final leaderboard with all player rankings
-- Clear presentation of game results
-- Maintains suspense throughout the game
 
 ## Browser Support
 - Works on modern browsers with WebSocket support
