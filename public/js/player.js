@@ -16,11 +16,6 @@ window.onload = function() {
     }
 };
 
-function updateLevelIndicator(level) {
-    const pointsIndicator = document.getElementById('pointsIndicator');
-    const starsContainer = document.getElementById('starsContainer');
-}
-
 function updateOtherPlayersCount() {
     const countElement = document.getElementById('otherPlayersCount');
     if (otherPlayersCount === 0) {
@@ -144,8 +139,6 @@ socket.on('game-state', (state) => {
     document.getElementById('score').textContent = `Poäng: ${totalScore}`;
     showGameScreen();
     
-    updateLevelIndicator(state.currentLevel);
-    document.getElementById('questionImage').src = state.image;
     document.getElementById('questionText').textContent = state.questionText;
     document.getElementById('gameProgress').textContent = 
         `Fråga ${state.questionNumber} av ${state.totalQuestions}`;
@@ -183,8 +176,6 @@ socket.on('new-question', (data) => {
     submittedAnswer = data.answer || null;
     
     showGameScreen();
-    updateLevelIndicator(0); // Start at level 1 (index 0)
-    document.getElementById('questionImage').src = data.image;
     document.getElementById('questionText').textContent = data.questionText;
     document.getElementById('results').innerHTML = '';
     document.getElementById('results').style.display = 'none';
@@ -192,11 +183,6 @@ socket.on('new-question', (data) => {
         `Fråga ${data.questionNumber} av ${data.totalQuestions}`;
     
     updateChoicesDisplay(data.choices, hasAnswered, submittedAnswer);
-});
-
-socket.on('show-level', (data) => {
-    updateLevelIndicator(data.level);
-    document.getElementById('questionImage').src = data.image;
 });
 
 socket.on('answer-revealed', (data) => {
@@ -216,7 +202,6 @@ socket.on('answer-revealed', (data) => {
         resultContent += `
             <p>Du svarade ${playerResult.correct ? 'rätt' : 'fel'}!<br>
             Ditt svar: ${playerResult.answer}<br>
-            Svarade på nivå: ${playerResult.answeredAtLevel}<br>
             Poäng: ${playerResult.points}</p>`;
         totalScore = playerResult.totalScore;
         document.getElementById('score').textContent = `Poäng: ${totalScore}`;
