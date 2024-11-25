@@ -7,9 +7,6 @@ let currentQuestionIndex = -1;
 let submittedAnswer = null;
 let otherPlayersCount = 0;
 
-const POINTS_PER_LEVEL = [10, 8, 6, 4];
-const STARS_PER_LEVEL = ['★★★★', '★★★', '★★', '★'];
-
 // Check for existing session
 window.onload = function() {
     const savedSession = localStorage.getItem('quizSession');
@@ -22,8 +19,6 @@ window.onload = function() {
 function updateLevelIndicator(level) {
     const pointsIndicator = document.getElementById('pointsIndicator');
     const starsContainer = document.getElementById('starsContainer');
-    pointsIndicator.textContent = POINTS_PER_LEVEL[level];
-    starsContainer.textContent = STARS_PER_LEVEL[level];
 }
 
 function updateOtherPlayersCount() {

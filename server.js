@@ -28,7 +28,7 @@ const gameState = {
     timeLeft: QUESTION_TIMER  // Track remaining time
 };
 
-const POINTS_FOR_CORRECT = 10;
+const POINTS_FOR_CORRECT = 1;
 
 function validatePlayerName(name) {
     if (name.length < 3) {
