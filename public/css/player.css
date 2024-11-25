@@ -13,13 +13,18 @@ body {
     width: 100%;
 }
 
-/* Repositioned score */
+/* Repositioned score to bottom */
 #score {
-    position: absolute;
-    top: 6px;
-    right: 20px;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
     font-weight: bold;
-    color: white;
+    color: #2196F3;
+    background: rgba(30, 30, 30, 0.9);
+    padding: 10px 20px;
+    border-radius: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .game-progress {

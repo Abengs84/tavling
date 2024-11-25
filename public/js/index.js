@@ -56,6 +56,8 @@ function updateOtherPlayersCount(count) {
 function joinGame() {
     const nameInput = document.getElementById('playerName').value.trim();
     if (nameInput) {
+        // Hide any existing error message when attempting to join
+        document.getElementById('errorMessage').style.display = 'none';
         socket.emit('player-connect', { name: nameInput });
     }
 }

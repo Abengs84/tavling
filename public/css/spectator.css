@@ -1,4 +1,4 @@
-body {
+html, body {
     margin: 0;
     padding: 0;
     background: #000;
@@ -7,6 +7,7 @@ body {
     align-items: center;
     min-height: 100vh;
     font-size: 24px;
+    overflow: hidden; /* Disable scrollbars */
 }
 
 #spectatorScreen {
@@ -16,7 +17,7 @@ body {
     position: relative;
     overflow: hidden;
     color: white;
-    padding: 2rem;
+    padding: 1rem;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -25,15 +26,15 @@ body {
 .game-header {
     display: flex;
     justify-content: center;
-    margin-bottom: 1rem;
-    font-size: 2rem;
+    margin-bottom: 0rem;
+    font-size: 1rem;
 }
 
 .timer-container {
     width: 100%;
-    height: 20px;
+    height: 10px;
     background: #333;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
 }
 
 .timer-bar {
@@ -50,10 +51,9 @@ body {
 }
 
 .question-text {
-    font-size: 3rem;
+    font-size: 2rem;
     text-align: center;
-    margin-bottom: 2rem;
-    min-height: 120px;
+    margin-bottom: 0rem;
 }
 
 .choices-container {
@@ -87,13 +87,19 @@ body {
 
 #results {
     text-align: center;
-    margin-top: 2rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 2rem;
 }
 
 #correctAnswer {
     font-size: 2rem;
     color: #2ecc71;
-    margin-bottom: 2rem;
+    margin-bottom: 3rem;
+    width: 100%;
 }
 
 #correctAnswer h2 {
@@ -103,51 +109,91 @@ body {
     border-radius: 8px;
     background: rgba(46, 204, 113, 0.1);
     display: inline-block;
+    font-size: 2rem;
 }
 
 #leaderboard {
-    margin-top: 2rem;
-    padding: 1rem;
     background: rgba(44, 62, 80, 0.5);
     border-radius: 10px;
 }
 
 #leaderboard h2 {
     color: #3498db;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0rem;
+    font-size: 2rem;
 }
 
 .leaderboard-entry {
     display: grid;
-    grid-template-columns: 100px 1fr 200px;
-    width: 80%;
-    margin: 0.5rem auto;
+    grid-template-columns: 120px 1fr 300px;
+    margin: 0rem auto;
     padding: 1rem;
     background: rgba(52, 152, 219, 0.1);
-    border-radius: 8px;
-    font-size: 1.5rem;
+    border-radius: 12px;
+    font-size: 2.5rem;
     align-items: center;
+    transition: transform 0.3s ease;
+}
+
+/* Rank-specific styles */
+.leaderboard-entry.rank-1 {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.1));
+    border: 2px solid #ffd700;
+    transform: scale(0.95);
+    margin-bottom: 0rem;
+}
+
+.leaderboard-entry.rank-2 {
+    background: linear-gradient(135deg, rgba(192, 192, 192, 0.2), rgba(192, 192, 192, 0.1));
+    border: 2px solid #c0c0c0;
+    transform: scale(0.9);
+    margin-bottom: 0rem;
+}
+
+.leaderboard-entry.rank-3 {
+    background: linear-gradient(135deg, rgba(205, 127, 50, 0.2), rgba(205, 127, 50, 0.1));
+    border: 2px solid #cd7f32;
+    transform: scale(0.85);
 }
 
 .leaderboard-position {
     font-weight: bold;
-    color: #3498db;
+    font-size: 3rem;
+}
+
+/* Position-specific colors */
+.rank-1 .leaderboard-position {
+    color: #ffd700; /* Gold */
+}
+
+.rank-2 .leaderboard-position {
+    color: #c0c0c0; /* Silver */
+}
+
+.rank-3 .leaderboard-position {
+    color: #cd7f32; /* Bronze */
 }
 
 .leaderboard-name {
     text-align: left;
-    padding-left: 2rem;
+    padding-left: 3rem;
+    font-weight: 500;
 }
 
 .leaderboard-score {
     text-align: right;
     padding-right: 2rem;
     color: #2ecc71;
+    font-weight: bold;
+    width: max-content;
 }
 
 @media (max-width: 1920px) {
     #spectatorScreen {
-        transform: scale(0.8);
         transform-origin: center center;
     }
+}
+
+#timerBar {
+    display: none;
 }

@@ -23,6 +23,11 @@ function updateChoicesDisplay(choices, correctAnswer = null) {
 
 function updateTimerBar(timeLeft, totalTime) {
     const timerBar = document.getElementById('timerBar');
+    const timerContainer = document.getElementById('timer-container');
+    
+    // Show the timer container and bar
+    timerContainer.style.display = 'block';
+    timerBar.style.display = 'block';
     
     timerBar.style.transition = 'none';
     timerBar.style.width = '100%';
@@ -56,13 +61,13 @@ function displayLeaderboard(results) {
     const sortedPlayers = Array.from(allPlayers.entries())
         .map(([name, score]) => ({ name, score }))
         .sort((a, b) => b.score - a.score)
-        .slice(0, 10);
+        .slice(0, 3); // Only take top 3
 
     const leaderboard = document.getElementById('leaderboard');
     leaderboard.innerHTML = `
         <h2>Topplista</h2>
         ${sortedPlayers.map((player, index) => `
-            <div class="leaderboard-entry">
+            <div class="leaderboard-entry rank-${index + 1}">
                 <div class="leaderboard-position">${index + 1}</div>
                 <div class="leaderboard-name">${player.name}</div>
                 <div class="leaderboard-score">${player.score} poäng</div>
@@ -79,6 +84,7 @@ socket.on('game-state', (state) => {
     currentChoices = state.choices;
     updateChoicesDisplay(state.choices);
     document.getElementById('results').style.display = 'none';
+    document.getElementById('choices').style.display = 'grid';
 
     if (state.timerState) {
         updateTimerBar(state.timerState.timeLeft, state.timerState.totalTime);
@@ -102,6 +108,9 @@ socket.on('new-question', (data) => {
     document.getElementById('gameProgress').textContent = 
         `Fråga ${data.questionNumber} av ${data.totalQuestions}`;
     
+    // Hide timer container when new question appears
+    document.getElementById('timer-container').style.display = 'none';
+    
     currentChoices = data.choices;
     updateChoicesDisplay(data.choices);
     document.getElementById('results').style.display = 'none';
@@ -112,8 +121,8 @@ socket.on('answer-revealed', (data) => {
     // Stop the timer animation
     stopTimer();
     
-    // Keep the question visible
-    updateChoicesDisplay(currentChoices, data.correctAnswer);
+    // Hide the choices container
+    document.getElementById('choices').style.display = 'none';
     
     // Show correct answer
     const correctAnswerDiv = document.getElementById('correctAnswer');
@@ -124,17 +133,16 @@ socket.on('answer-revealed', (data) => {
     
     // Show results
     document.getElementById('results').style.display = 'block';
-    document.getElementById('choices').style.display = 'grid';
 });
 
-socket.on('game-over', (players) => {
+socket.on('game-over', (data) => {
     document.getElementById('questionText').textContent = 'Quiz Avslutat';
     document.getElementById('choices').style.display = 'none';
     document.getElementById('gameProgress').style.display = 'none';
     document.getElementById('correctAnswer').innerHTML = '<h2>Slutresultat</h2>';
     
     // Convert players array to the format displayLeaderboard expects
-    const results = players.map(player => ({
+    const results = data.map(player => ({
         playerName: player.name,
         totalScore: player.score
     }));
