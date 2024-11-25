@@ -9,13 +9,6 @@ function updateChoicesDisplay(choices, correctAnswer = null) {
     choices.forEach(choice => {
         const button = document.createElement('button');
         button.className = 'choice-button';
-        if (correctAnswer) {
-            if (choice === correctAnswer) {
-                button.className += ' correct';
-            } else {
-                button.className += ' incorrect';
-            }
-        }
         button.textContent = choice;
         choicesContainer.appendChild(button);
     });
@@ -60,12 +53,11 @@ function displayLeaderboard(results) {
     // Convert Map to array and sort by score
     const sortedPlayers = Array.from(allPlayers.entries())
         .map(([name, score]) => ({ name, score }))
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 3); // Only take top 3
+        .sort((a, b) => b.score - a.score);
 
     const leaderboard = document.getElementById('leaderboard');
     leaderboard.innerHTML = `
-        <h2>Topplista</h2>
+        <h2>Slutresultat</h2>
         ${sortedPlayers.map((player, index) => `
             <div class="leaderboard-entry rank-${index + 1}">
                 <div class="leaderboard-position">${index + 1}</div>
@@ -85,6 +77,7 @@ socket.on('game-state', (state) => {
     updateChoicesDisplay(state.choices);
     document.getElementById('results').style.display = 'none';
     document.getElementById('choices').style.display = 'grid';
+    document.getElementById('leaderboard').innerHTML = '';
 
     if (state.timerState) {
         updateTimerBar(state.timerState.timeLeft, state.timerState.totalTime);
@@ -115,39 +108,34 @@ socket.on('new-question', (data) => {
     updateChoicesDisplay(data.choices);
     document.getElementById('results').style.display = 'none';
     document.getElementById('choices').style.display = 'grid';
+    document.getElementById('leaderboard').innerHTML = '';
 });
 
 socket.on('answer-revealed', (data) => {
     // Stop the timer animation
     stopTimer();
     
-    // Hide the choices container
-    document.getElementById('choices').style.display = 'none';
+    // Keep choices visible
+    document.getElementById('choices').style.display = 'grid';
     
-    // Show correct answer
-    const correctAnswerDiv = document.getElementById('correctAnswer');
-    correctAnswerDiv.innerHTML = `<h2>Rätt svar: ${data.correctAnswer}</h2>`;
-    
-    // Display leaderboard with all players
-    displayLeaderboard(data.results);
-    
-    // Show results
-    document.getElementById('results').style.display = 'block';
+    // Hide results during game
+    document.getElementById('results').style.display = 'none';
+    document.getElementById('leaderboard').innerHTML = '';
 });
 
 socket.on('game-over', (data) => {
     document.getElementById('questionText').textContent = 'Quiz Avslutat';
     document.getElementById('choices').style.display = 'none';
     document.getElementById('gameProgress').style.display = 'none';
-    document.getElementById('correctAnswer').innerHTML = '<h2>Slutresultat</h2>';
+    document.getElementById('results').style.display = 'none';
     
-    // Convert players array to the format displayLeaderboard expects
+    // Convert players array to the format displayLeaderboard expects and show final scores
     const results = data.map(player => ({
         playerName: player.name,
         totalScore: player.score
     }));
     displayLeaderboard(results);
-    document.getElementById('results').style.display = 'block';
+    document.getElementById('leaderboard').style.display = 'block';
 });
 
 // Handle player joined/left events to track all players

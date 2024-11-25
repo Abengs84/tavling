@@ -53,7 +53,7 @@ html, body {
 .question-text {
     font-size: 2rem;
     text-align: center;
-    margin-bottom: 0rem;
+    margin-bottom: 2rem;
 }
 
 .choices-container {

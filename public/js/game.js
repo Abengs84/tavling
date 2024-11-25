@@ -77,7 +77,6 @@ socket.on('player-welcome', (data) => {
     hasAnswered = data.hasAnswered || false;
     submittedAnswer = data.submittedAnswer || null;
     
-    document.getElementById('score').textContent = `Poäng: ${totalScore}`;
     document.getElementById('gameScreen').style.display = 'block';
 });
 
@@ -88,7 +87,6 @@ socket.on('game-state', (state) => {
     submittedAnswer = state.answer;
 
     document.getElementById('gameScreen').style.display = 'block';
-    document.getElementById('score').textContent = `Poäng: ${totalScore}`;
     
     document.getElementById('questionText').textContent = state.questionText;
     document.getElementById('gameProgress').textContent = 
@@ -117,6 +115,14 @@ socket.on('timer-end', () => {
             btn.disabled = true;
         });
     }
+    const results = document.getElementById('results');
+    results.innerHTML = `
+        <div style="text-align: center; margin-top: 20px;">
+            <h3>Tiden är ute</h3>
+            <p>Tack för ditt svar</p>
+        </div>
+    `;
+    results.style.display = 'block';
 });
 
 socket.on('connection-error', function(error) {
@@ -172,29 +178,15 @@ socket.on('answer-revealed', (data) => {
     document.querySelectorAll('.choice-button').forEach(btn => {
         btn.disabled = true;
     });
-
-    const results = document.getElementById('results');
-    let resultContent = `<h3>Rätt svar: ${data.correctAnswer}</h3>`;
     
+    // Keep the timer end message visible
+    // Don't hide the results div here anymore
+    
+    // Update internal score tracking
     const playerResult = data.results.find(result => result.playerName === playerName);
-    
-    if (!playerResult) {
-        resultContent += `<p>Du gav inget svar</p>`;
-    } else {
-        resultContent += `<p>Du svarade ${playerResult.correct ? 'rätt' : 'fel'}!`;
-        
-        if (!playerResult.correct) {
-            resultContent += `<br>Ditt svar: ${playerResult.answer}`;
-        }
-        
-        resultContent += `<br>Poäng: ${playerResult.points}</p>`;
-        
+    if (playerResult) {
         totalScore = playerResult.totalScore;
-        document.getElementById('score').textContent = `Poäng: ${totalScore}`;
     }
-    
-    results.innerHTML = resultContent;
-    results.style.display = 'block';
 });
 
 socket.on('game-over', (players) => {
