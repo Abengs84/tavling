@@ -11,28 +11,28 @@ A real-time quiz application with admin control, player participation, and spect
 - View all player answers in real-time
 - Reveal answers at any time during countdown
 - Move to next question
-- View final scores
+- View all scores and answers for game management
 
 ### Player View
 - Join with custom name
 - Answer questions within time limit
-- See immediate feedback on answers
-- View personal score
+- See confirmation when time runs out
+- View final scores at game end
 - See final ranking
 
-### Spectator View (New!)
+### Spectator View
 - Watch quiz in real-time on a 1080p display (16:9)
 - See current question and choices
 - View countdown timer
-- See correct answer when revealed
-- View top 10 leaderboard after each question
+- Keep choices visible after answer reveal
+- View final leaderboard at game end
 
 ### Real-time Features
 - Live countdown timer with admin control
 - Instant answer submission
-- Real-time score updates
 - Synchronized timer across all views
 - Admin can force reveal answers during countdown
+- "Tiden är ute" confirmation after countdown
 
 ## Installation
 
@@ -88,32 +88,36 @@ Example format:
 
 ### Views
 - Admin: Full game control and player monitoring
-- Player: Interactive quiz participation
-- Spectator: Large-format display for audience viewing
+- Player: Interactive quiz participation with hidden scores
+- Spectator: Large-format display focused on questions
 
 ### Timer System
 - 30-second countdown per question
 - Admin can reveal answer during countdown
 - Timer synchronizes across all views
 - Visual progress bar with smooth animation
+- Clear "Tiden är ute" message after countdown
 
 ## Recent Updates
 
-### Spectator View
-- Added dedicated view for large displays
-- 16:9 aspect ratio (1920x1080)
-- Shows current question state
-- Displays top 10 leaderboard
+### Hide Points Feature
+- Points hidden during gameplay for increased suspense
+- No leaderboard updates during game
+- Choices remain visible in spectator view after answer reveal
+- Clear "Tiden är ute" message when time runs out
+- All scores and rankings revealed only at game end
 
 ### Timer Control
-- Admin can now reveal answers during countdown
+- Admin can reveal answers during countdown
 - Timer freezes at current position when answer revealed
 - Synchronized stopping across all views
+- Persistent time-up message until next question
 
-### Leaderboard
-- Shows all players with points
-- Updates in real-time after each question
-- Displays top 10 on spectator view
+### Final Results
+- Complete scores shown only at game end
+- Final leaderboard with all player rankings
+- Clear presentation of game results
+- Maintains suspense throughout the game
 
 ## Browser Support
 - Works on modern browsers with WebSocket support
