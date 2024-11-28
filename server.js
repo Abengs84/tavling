@@ -1,9 +1,15 @@
 const express = require('express');
 const app = express();
-const http = require('http').Server(app);
-const io = require('socket.io')(http);
-const path = require('path');
 const fs = require('fs');
+const path = require('path');
+const https = require('https');
+const socketIO = require('socket.io');
+
+// SSL certificate configuration
+const sslOptions = {
+    cert: fs.readFileSync('/etc/pki/tls/cert.pem'),
+    key: fs.readFileSync('/etc/pki/tls/privkey.pem'),
+};
 
 app.use((req, res, next) => {
     console.log(`[DEBUG] Requesting: ${req.path}`);
@@ -148,6 +154,10 @@ function broadcastScores() {
     }));
     io.to('admin').emit('scores-updated', players);
 }
+
+// Create HTTPS server
+const server = https.createServer(sslOptions, app);
+const io = socketIO(server);
 
 io.on('connection', (socket) => {
     console.log('[DEBUG] New socket connection');
@@ -424,10 +434,10 @@ io.on('connection', (socket) => {
     });
 });
 
-const PORT = 3000;
+const PORT = 8060;
 const exec = require('child_process').exec;
 exec(`lsof -ti:${PORT} | xargs kill -9`, (error) => {
-    http.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
+    server.listen(PORT, () => {
+        console.log(`HTTPS Server running on port ${PORT}`);
     });
 });

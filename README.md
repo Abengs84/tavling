@@ -41,22 +41,35 @@ A real-time quiz application with admin control, player participation, and spect
 npm install
 ```
 
+## SSL Certificates
+
+The server uses HTTPS with SSL certificates from Synology NAS. The certificates should be available at:
+- `/etc/pki/tls/cert.pem` - Server certificate
+- `/etc/pki/tls/privkey.pem` - Private key
+
+The server needs read access to these files, so it should be run with appropriate permissions:
+```bash
+sudo node server.js
+```
+
 ## Running the Server
 
 Start the server using either:
 ```bash
 npm start
 ```
-or
+or with SSL certificates:
 ```bash
-node server.js
+sudo node server.js
 ```
 
 ## Accessing the Quiz
 
-- Players join at: http://localhost:3000
-- Admin interface at: http://localhost:3000/admin.html
-- Spectator view at: http://localhost:3000/spectator.html
+- Players join at: https://localhost:8060
+- Admin interface at: https://localhost:8060/admin.html
+- Spectator view at: https://localhost:8060/spectator.html
+
+Note: The server now uses HTTPS on port 8060 for secure connections.
 
 ## Customizing Questions
 
@@ -98,6 +111,11 @@ Example format:
 - Clear "Tiden är ute" message after countdown
 
 ## Recent Updates
+
+### HTTPS Support
+- Secure connections using Synology NAS SSL certificates
+- WebSocket communication over secure protocol
+- Protected player data and game interactions
 
 ### Hide Points Feature
 - Points hidden during gameplay for increased suspense
