@@ -9,7 +9,14 @@ const socketIO = require('socket.io');
 const sslOptions = {
     cert: fs.readFileSync('/etc/pki/tls/cert.pem'),
     key: fs.readFileSync('/etc/pki/tls/privkey.pem'),
+    ca: fs.readFileSync('/etc/pki/tls/chain.pem')
 };
+
+// Admin password - this should be stored securely in production
+const ADMIN_PASSWORD = 'REDACTED';
+
+// Track authenticated admin sockets
+const authenticatedAdmins = new Set();
 
 app.use((req, res, next) => {
     console.log(`[DEBUG] Requesting: ${req.path}`);
@@ -162,6 +169,15 @@ const io = socketIO(server);
 io.on('connection', (socket) => {
     console.log('[DEBUG] New socket connection');
 
+    socket.on('admin-login', (password) => {
+        if (password === ADMIN_PASSWORD) {
+            authenticatedAdmins.add(socket.id);
+            socket.emit('admin-login-response', { success: true });
+        } else {
+            socket.emit('admin-login-response', { success: false });
+        }
+    });
+
     socket.on('spectator-join', () => {
         console.log('[DEBUG] Spectator joined');
         socket.join('spectators');
@@ -191,6 +207,12 @@ io.on('connection', (socket) => {
     });
 
     socket.on('admin-connect', () => {
+        // Check if the socket is authenticated
+        if (!authenticatedAdmins.has(socket.id)) {
+            socket.emit('admin-login-response', { success: false });
+            return;
+        }
+
         socket.join('admin');
         gameState.adminSocket = socket;
         gameState.questions = loadQuestions();
@@ -423,6 +445,7 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         if (socket === gameState.adminSocket) {
             gameState.adminSocket = null;
+            authenticatedAdmins.delete(socket.id);
         } else {
             const player = gameState.players.get(socket.id);
             if (player) {

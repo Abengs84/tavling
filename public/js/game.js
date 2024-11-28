@@ -168,6 +168,9 @@ socket.on('new-question', (data) => {
         `Fråga ${data.questionNumber} av ${data.totalQuestions}`;
     
     updateChoicesDisplay(data.choices, hasAnswered, submittedAnswer);
+    
+    // Remove any winner classes from body
+    document.body.classList.remove('gold-winner', 'silver-winner', 'bronze-winner');
 });
 
 socket.on('answer-revealed', (data) => {
@@ -208,11 +211,33 @@ socket.on('game-over', (players) => {
     document.getElementById('choices').style.display = 'none';
     document.getElementById('gameProgress').style.display = 'none';
     
+    // Show medal image for top 3 players
+    let medalHtml = '';
+    if (currentPlayerIndex < 3) {
+        console.log(`Loading medal image for rank ${currentPlayerIndex + 1}`);
+        const medalImg = new Image();
+        medalImg.onload = () => console.log('Medal image loaded successfully');
+        medalImg.onerror = (e) => console.error('Error loading medal image:', e);
+        medalImg.src = `/img/${currentPlayerIndex + 1}.png`;
+        medalHtml = `<div style="text-align: center;"><img src="/img/${currentPlayerIndex + 1}.png" alt="Medal" style="width: 150px; height: 150px; margin-bottom: 20px; display: block; margin-left: auto; margin-right: auto;"></div>`;
+        
+        // Add winner animation class to body
+        document.body.classList.remove('gold-winner', 'silver-winner', 'bronze-winner');
+        if (currentPlayerIndex === 0) {
+            document.body.classList.add('gold-winner');
+        } else if (currentPlayerIndex === 1) {
+            document.body.classList.add('silver-winner');
+        } else if (currentPlayerIndex === 2) {
+            document.body.classList.add('bronze-winner');
+        }
+    }
+    
     // Create a new container for final scores
     const gameScreen = document.getElementById('gameScreen');
     const finalScoresDiv = document.createElement('div');
     finalScoresDiv.className = 'final-scores';
     finalScoresDiv.innerHTML = `
+        ${medalHtml}
         <h2>Slutresultat</h2>
         <div class="scores-list">
             ${playersToShow.map((p, i) => `

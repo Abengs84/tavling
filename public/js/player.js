@@ -220,14 +220,17 @@ socket.on('game-over', (players) => {
     const sortedPlayers = players.sort((a, b) => b.score - a.score);
     const results = document.getElementById('results');
     results.innerHTML = `
-        <h2>Spelet är slut - Slutresultat</h2>
+        <h2>Slutresultat</h2>
         ${sortedPlayers.map((p, i) => `
             <div${p.name === playerName ? ' style="font-weight: bold;"' : ''}>
-                ${i + 1}. ${p.name}: ${p.score} poäng
+                ${i + 1}
+                ${p.name}
+                ${p.score} poäng
             </div>
         `).join('')}
     `;
     results.style.display = 'block';
+
     localStorage.removeItem('quizSession');
     setTimeout(() => {
         showLoginScreen();

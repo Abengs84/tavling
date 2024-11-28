@@ -4,7 +4,25 @@ let answerRevealed = false;
 let correctAnswer = null;
 const playerAnswers = new Map();
 
-socket.emit('admin-connect');
+// Handle login form submission
+document.getElementById('loginButton').addEventListener('click', () => {
+    const password = document.getElementById('password').value;
+    socket.emit('admin-login', password);
+});
+
+// Handle login response
+socket.on('admin-login-response', (response) => {
+    if (response.success) {
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'grid';
+        socket.emit('admin-connect');
+    } else {
+        const errorElement = document.getElementById('loginError');
+        errorElement.textContent = 'Invalid password';
+        errorElement.style.display = 'block';
+        document.getElementById('password').value = '';
+    }
+});
 
 socket.on('admin-connected', () => {
     console.log('Connected as admin');
@@ -207,5 +225,12 @@ document.getElementById('nextQuestion').addEventListener('click', () => {
     } else {
         socket.emit('next-question');
         document.getElementById('nextQuestion').disabled = true;
+    }
+});
+
+// Handle Enter key in password input
+document.getElementById('password').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        document.getElementById('loginButton').click();
     }
 });
