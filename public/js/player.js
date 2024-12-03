@@ -1,4 +1,17 @@
+// Make submitYear function global
+window.submitYear = function() {
+    const yearInput = document.getElementById('yearInput');
+    const year = yearInput.value;
+    if (year && year.length === 4 && !isNaN(year)) {
+        submitAnswer(year);
+    } else {
+        alert('Vänligen ange ett giltigt årtal med 4 siffror');
+    }
+};
+
+// Initialize socket
 const socket = io();
+
 let hasAnswered = false;
 let totalScore = 0;
 let playerName = '';
@@ -27,50 +40,174 @@ function updateOtherPlayersCount() {
     }
 }
 
-function updateChoicesDisplay(choices, hasAnswered, submittedAnswer) {
-    const choicesContainer = document.getElementById('choices');
-    choicesContainer.innerHTML = '';
+function createYearInput(hasAnswered, submittedAnswer) {
+    const container = document.createElement('div');
+    container.style.cssText = `
+        width: 90%;
+        max-width: 400px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: rgba(33, 150, 243, 0.1);
+        border: 2px solid #2196F3;
+        border-radius: 8px;
+        text-align: center;
+    `;
+    
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.id = 'yearInput';
+    input.placeholder = 'Ange ett årtal';
+    input.min = '1000';
+    input.max = '2024';
+    input.disabled = hasAnswered;
+    input.value = hasAnswered && submittedAnswer ? submittedAnswer : '';
+    input.style.cssText = `
+        width: 200px;
+        text-align: center;
+        font-size: 1.2em;
+        padding: 12px;
+        margin: 10px auto;
+        border: 2px solid #2196F3;
+        border-radius: 8px;
+        background-color: ${hasAnswered ? '#1e1e1e' : '#ffffff'};
+        color: ${hasAnswered ? '#666' : '#000000'};
+        display: block;
+        pointer-events: ${hasAnswered ? 'none' : 'auto'};
+    `;
+    
+    const button = document.createElement('button');
+    button.textContent = hasAnswered ? 'Svar låst' : 'Svara';
+    button.disabled = hasAnswered;
+    button.style.cssText = `
+        display: block;
+        width: 200px;
+        margin: 10px auto;
+        padding: 12px;
+        border: none;
+        border-radius: 24px;
+        background: ${hasAnswered ? '#1e1e1e' : '#2196F3'};
+        color: ${hasAnswered ? '#666' : 'white'};
+        cursor: ${hasAnswered ? 'not-allowed' : 'pointer'};
+        font-size: 1em;
+        pointer-events: ${hasAnswered ? 'none' : 'auto'};
+    `;
+    
+    if (!hasAnswered) {
+        button.onclick = () => {
+            const year = input.value;
+            if (year && year.length === 4 && !isNaN(year)) {
+                // Disable input and button immediately
+                input.disabled = true;
+                button.disabled = true;
+                input.style.backgroundColor = '#1e1e1e';
+                input.style.color = '#666';
+                input.style.pointerEvents = 'none';
+                button.style.backgroundColor = '#1e1e1e';
+                button.style.color = '#666';
+                button.style.pointerEvents = 'none';
+                button.textContent = 'Svar låst';
+                
+                submitAnswer(year);
+            } else {
+                alert('Vänligen ange ett giltigt årtal med 4 siffror');
+            }
+        };
+        
+        // Add enter key support
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                button.click();
+            }
+        });
+    }
+    
+    container.appendChild(input);
+    container.appendChild(button);
+    
+    if (hasAnswered) {
+        const lockedMessage = document.createElement('div');
+        lockedMessage.textContent = 'Ditt svar är låst';
+        lockedMessage.style.cssText = `
+            color: #666;
+            font-style: italic;
+            margin-top: 10px;
+        `;
+        container.appendChild(lockedMessage);
+    }
+    
+    return container;
+}
+
+function createMultipleChoice(choices, hasAnswered, submittedAnswer) {
+    const container = document.createElement('div');
+    container.style.cssText = `
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        width: 90%;
+        max-width: 400px;
+        margin: 20px auto;
+        padding: 20px;
+    `;
+    
     choices.forEach(choice => {
         const button = document.createElement('button');
         button.className = 'choice-button';
-        button.textContent = choice;
-        
-        if (hasAnswered) {
-            button.disabled = true;
-            if (choice === submittedAnswer) {
-                button.style.background = '#6c757d';
-            }
-        } else {
-            button.onclick = () => submitAnswer(choice);
+        if (hasAnswered && choice === submittedAnswer) {
+            button.classList.add('selected');
         }
-        choicesContainer.appendChild(button);
+        button.textContent = choice;
+        button.disabled = hasAnswered;
+        
+        if (!hasAnswered) {
+            button.onclick = () => {
+                // Remove selected class from all buttons
+                container.querySelectorAll('.choice-button').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                // Add selected class to clicked button
+                button.classList.add('selected');
+                submitAnswer(choice);
+            };
+        }
+        container.appendChild(button);
     });
+    
+    return container;
 }
 
-// Real-time name validation
-document.getElementById('playerName').addEventListener('input', function(e) {
-    const name = e.target.value.trim();
-    if (name.length >= 3) {
-        socket.emit('validate-name', name);
-    }
-});
-
-socket.on('name-validation-result', function(result) {
-    const errorMessage = document.getElementById('errorMessage');
-    if (!result.valid) {
-        errorMessage.textContent = result.error;
-        errorMessage.style.display = 'block';
+function updateChoicesDisplay(choices, hasAnswered, submittedAnswer, questionType) {
+    const choicesContainer = document.getElementById('choices');
+    if (!choicesContainer) return;
+    
+    choicesContainer.innerHTML = '';
+    
+    // Set container style based on question type
+    if (questionType === 'year') {
+        choicesContainer.style.cssText = `
+            width: 90%;
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+        `;
     } else {
-        errorMessage.style.display = 'none';
+        choicesContainer.style.cssText = `
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            width: 90%;
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+        `;
     }
-});
-
-socket.on('connection-error', function(error) {
-    const errorMessage = document.getElementById('errorMessage');
-    errorMessage.textContent = error;
-    errorMessage.style.display = 'block';
-    showLoginScreen();
-});
+    
+    const content = questionType === 'year' 
+        ? createYearInput(hasAnswered, submittedAnswer)
+        : createMultipleChoice(choices, hasAnswered, submittedAnswer);
+    
+    choicesContainer.appendChild(content);
+}
 
 function showLoginScreen() {
     document.getElementById('loginScreen').style.display = 'block';
@@ -101,6 +238,31 @@ function joinGame() {
     }
 }
 
+// Real-time name validation
+document.getElementById('playerName').addEventListener('input', function(e) {
+    const name = e.target.value.trim();
+    if (name.length >= 3) {
+        socket.emit('validate-name', name);
+    }
+});
+
+socket.on('name-validation-result', function(result) {
+    const errorMessage = document.getElementById('errorMessage');
+    if (!result.valid) {
+        errorMessage.textContent = result.error;
+        errorMessage.style.display = 'block';
+    } else {
+        errorMessage.style.display = 'none';
+    }
+});
+
+socket.on('connection-error', function(error) {
+    const errorMessage = document.getElementById('errorMessage');
+    errorMessage.textContent = error;
+    errorMessage.style.display = 'block';
+    showLoginScreen();
+});
+
 socket.on('player-welcome', (data) => {
     playerName = data.name;
     sessionId = data.sessionId;
@@ -108,7 +270,6 @@ socket.on('player-welcome', (data) => {
     hasAnswered = data.hasAnswered || false;
     submittedAnswer = data.submittedAnswer || null;
     
-    // Save session data
     localStorage.setItem('quizSession', JSON.stringify({
         name: playerName,
         sessionId: sessionId,
@@ -117,7 +278,6 @@ socket.on('player-welcome', (data) => {
 
     document.getElementById('welcomePlayerName').textContent = playerName;
     
-    // Remove score element if it exists
     const scoreElement = document.getElementById('score');
     if (scoreElement) {
         scoreElement.style.display = 'none';
@@ -131,7 +291,7 @@ socket.on('player-welcome', (data) => {
 });
 
 socket.on('players-updated', (count) => {
-    otherPlayersCount = Math.max(0, count - 1); // Subtract 1 to exclude current player
+    otherPlayersCount = Math.max(0, count - 1);
     updateOtherPlayersCount();
 });
 
@@ -147,25 +307,26 @@ socket.on('game-state', (state) => {
     document.getElementById('gameProgress').textContent = 
         `Fråga ${state.questionNumber} av ${state.totalQuestions}`;
     
-    updateChoicesDisplay(state.choices, hasAnswered, submittedAnswer);
+    updateChoicesDisplay(state.choices, hasAnswered, submittedAnswer, state.questionType);
 });
 
 socket.on('answer-error', (error) => {
     hasAnswered = true;
-    document.querySelectorAll('.choice-button').forEach(btn => {
-        btn.disabled = true;
+    document.querySelectorAll('.choice-button, #yearInput, button').forEach(el => {
+        el.disabled = true;
     });
 });
 
 socket.on('answer-confirmed', (data) => {
     hasAnswered = true;
     submittedAnswer = data.answer;
-    document.querySelectorAll('.choice-button').forEach(btn => {
-        btn.disabled = true;
-        if (btn.textContent === data.answer) {
-            btn.style.background = '#6c757d';
-        }
+    document.querySelectorAll('.choice-button, #yearInput, button').forEach(el => {
+        el.disabled = true;
     });
+    const yearInput = document.getElementById('yearInput');
+    if (yearInput) {
+        yearInput.value = data.answer;
+    }
 });
 
 function submitAnswer(choice) {
@@ -175,9 +336,10 @@ function submitAnswer(choice) {
 }
 
 socket.on('new-question', (data) => {
+    // Reset all state for new question
     currentQuestionIndex = data.questionNumber - 1;
-    hasAnswered = data.hasAnswered || false;
-    submittedAnswer = data.answer || null;
+    hasAnswered = false; // Reset answer state
+    submittedAnswer = null; // Clear previous answer
     
     showGameScreen();
     document.getElementById('questionText').textContent = data.questionText;
@@ -186,7 +348,7 @@ socket.on('new-question', (data) => {
     document.getElementById('gameProgress').textContent = 
         `Fråga ${data.questionNumber} av ${data.totalQuestions}`;
     
-    updateChoicesDisplay(data.choices, hasAnswered, submittedAnswer);
+    updateChoicesDisplay(data.choices, hasAnswered, submittedAnswer, data.questionType);
 });
 
 socket.on('timer-end', () => {
@@ -201,15 +363,10 @@ socket.on('timer-end', () => {
 });
 
 socket.on('answer-revealed', (data) => {
-    // Disable all choice buttons
-    document.querySelectorAll('.choice-button').forEach(btn => {
-        btn.disabled = true;
+    document.querySelectorAll('.choice-button, #yearInput, button').forEach(el => {
+        el.disabled = true;
     });
     
-    // Keep the timer end message visible
-    // Don't hide the results div here anymore
-    
-    // Update internal score tracking without displaying
     const playerResult = data.results.find(result => result.playerName === playerName);
     if (playerResult) {
         totalScore = playerResult.totalScore;

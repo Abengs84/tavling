@@ -98,6 +98,12 @@
         "Hals"
       ],
       "correctAnswer": "Kind"
+    },
+    {
+      "id": 10,
+      "question": "Vilket år grundades Vasa stad?",
+      "type": "year",
+      "correctAnswer": "1606"
     }
   ]
 }

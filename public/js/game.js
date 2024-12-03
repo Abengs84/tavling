@@ -13,46 +13,150 @@ window.onload = function() {
     const savedSession = localStorage.getItem('quizSession');
     if (savedSession) {
         const sessionData = JSON.parse(savedSession);
-        playerName = sessionData.name; // Set playerName immediately
-        document.getElementById('gameScreen').style.display = 'block'; // Ensure game screen is visible
+        playerName = sessionData.name;
+        document.getElementById('gameScreen').style.display = 'block';
         socket.emit('reconnect-player', sessionData);
     } else {
-        // If no session exists, redirect to login
         window.location.href = '/index.html';
     }
 };
 
-function updateChoicesDisplay(choices, hasAnswered, submittedAnswer) {
+function createYearInput(hasAnswered, submittedAnswer) {
+    const container = document.createElement('div');
+    container.style.cssText = `
+        max-width: 400px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: rgba(33, 150, 243, 0.1);
+        border: 2px solid #2196F3;
+        border-radius: 8px;
+        text-align: center;
+    `;
+    
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.id = 'yearInput';
+    input.placeholder = 'Ange ett årtal';
+    input.min = '1000';
+    input.max = '2024';
+    input.disabled = hasAnswered;
+    input.value = hasAnswered && submittedAnswer ? submittedAnswer : '';
+    input.style.cssText = `
+        width: 200px;
+        text-align: center;
+        font-size: 1.2em;
+        padding: 12px;
+        margin: 10px auto;
+        border: 2px solid #2196F3;
+        border-radius: 8px;
+        background-color: ${hasAnswered ? '#1e1e1e' : '#ffffff'};
+        color: ${hasAnswered ? '#666' : '#000000'};
+        display: block;
+        pointer-events: ${hasAnswered ? 'none' : 'auto'};
+    `;
+    
+    const button = document.createElement('button');
+    button.textContent = hasAnswered ? 'Svar låst' : 'Svara';
+    button.disabled = hasAnswered;
+    button.style.cssText = `
+        display: block;
+        width: 200px;
+        margin: 10px auto;
+        padding: 12px;
+        border: none;
+        border-radius: 24px;
+        background: ${hasAnswered ? '#1e1e1e' : '#2196F3'};
+        color: ${hasAnswered ? '#666' : 'white'};
+        cursor: ${hasAnswered ? 'not-allowed' : 'pointer'};
+        font-size: 1em;
+        pointer-events: ${hasAnswered ? 'none' : 'auto'};
+    `;
+    
+    if (!hasAnswered) {
+        button.onclick = () => {
+            const year = input.value;
+            if (year && year.length === 4 && !isNaN(year)) {
+                // Disable input and button immediately
+                input.disabled = true;
+                button.disabled = true;
+                input.style.backgroundColor = '#1e1e1e';
+                input.style.color = '#666';
+                input.style.pointerEvents = 'none';
+                button.style.backgroundColor = '#1e1e1e';
+                button.style.color = '#666';
+                button.style.pointerEvents = 'none';
+                button.textContent = 'Svar låst';
+                
+                submitAnswer(year);
+            } else {
+                alert('Vänligen ange ett giltigt årtal med 4 siffror');
+            }
+        };
+        
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                button.click();
+            }
+        });
+    }
+    
+    container.appendChild(input);
+    container.appendChild(button);
+    
+    if (hasAnswered) {
+        const lockedMessage = document.createElement('div');
+        lockedMessage.textContent = 'Ditt svar är låst';
+        lockedMessage.style.cssText = `
+            color: #666;
+            font-style: italic;
+            margin-top: 10px;
+        `;
+        container.appendChild(lockedMessage);
+    }
+    
+    return container;
+}
+
+function updateChoicesDisplay(choices, hasAnswered, submittedAnswer, questionType) {
     const choicesContainer = document.getElementById('choices');
     choicesContainer.innerHTML = '';
-    choices.forEach(choice => {
-        const button = document.createElement('button');
-        button.className = 'choice-button';
-        button.textContent = choice;
-        
-        if (hasAnswered) {
-            button.disabled = true;
-            if (choice === submittedAnswer) {
-                button.style.background = '#6c757d';
+    
+    if (questionType === 'year') {
+        const yearInput = createYearInput(hasAnswered, submittedAnswer);
+        choicesContainer.appendChild(yearInput);
+    } else {
+        choices.forEach(choice => {
+            const button = document.createElement('button');
+            button.className = 'choice-button';
+            if (hasAnswered && choice === submittedAnswer) {
+                button.classList.add('selected');
             }
-        } else {
-            button.onclick = () => submitAnswer(choice);
-        }
-        choicesContainer.appendChild(button);
-    });
+            button.textContent = choice;
+            button.disabled = hasAnswered;
+            
+            if (!hasAnswered) {
+                button.onclick = () => {
+                    // Remove selected class from all buttons
+                    choicesContainer.querySelectorAll('.choice-button').forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
+                    // Add selected class to clicked button
+                    button.classList.add('selected');
+                    submitAnswer(choice);
+                };
+            }
+            choicesContainer.appendChild(button);
+        });
+    }
 }
 
 function updateTimerBar(timeLeft, totalTime) {
     const timerBar = document.getElementById('timerBar');
     
-    // Reset the timer bar
     timerBar.style.transition = 'none';
     timerBar.style.width = '100%';
-    
-    // Force a reflow
     timerBar.offsetHeight;
     
-    // Start the countdown animation
     if (timeLeft > 0) {
         requestAnimationFrame(() => {
             timerBar.style.transition = `width ${timeLeft}s linear`;
@@ -92,9 +196,8 @@ socket.on('game-state', (state) => {
     document.getElementById('gameProgress').textContent = 
         `Fråga ${state.questionNumber} av ${state.totalQuestions}`;
     
-    updateChoicesDisplay(state.choices, hasAnswered, submittedAnswer);
+    updateChoicesDisplay(state.choices, hasAnswered, submittedAnswer, state.questionType);
 
-    // Handle timer state if provided
     if (state.timerState) {
         updateTimerBar(state.timerState.timeLeft, state.timerState.totalTime);
     }
@@ -111,7 +214,7 @@ socket.on('timer-sync', (timerState) => {
 socket.on('timer-end', () => {
     stopTimer();
     if (!hasAnswered) {
-        document.querySelectorAll('.choice-button').forEach(btn => {
+        document.querySelectorAll('.choice-button, #yearInput, button').forEach(btn => {
             btn.disabled = true;
         });
     }
@@ -119,21 +222,20 @@ socket.on('timer-end', () => {
     results.innerHTML = `
         <div style="text-align: center; margin-top: 20px;">
             <h3>Tiden är ute</h3>
-            <p>Tack för ditt svar</p>
+            <p>${hasAnswered ? 'Tack för ditt svar' : 'Du gav inget svar'}</p>
         </div>
     `;
     results.style.display = 'block';
 });
 
 socket.on('connection-error', function(error) {
-    // Redirect to login page with error
     localStorage.removeItem('quizSession');
     window.location.href = `/index.html?error=${encodeURIComponent(error)}`;
 });
 
 socket.on('answer-error', (error) => {
     hasAnswered = true;
-    document.querySelectorAll('.choice-button').forEach(btn => {
+    document.querySelectorAll('.choice-button, #yearInput, button').forEach(btn => {
         btn.disabled = true;
     });
 });
@@ -141,12 +243,13 @@ socket.on('answer-error', (error) => {
 socket.on('answer-confirmed', (data) => {
     hasAnswered = true;
     submittedAnswer = data.answer;
-    document.querySelectorAll('.choice-button').forEach(btn => {
+    document.querySelectorAll('.choice-button, #yearInput, button').forEach(btn => {
         btn.disabled = true;
-        if (btn.textContent === data.answer) {
-            btn.style.background = '#6c757d';
-        }
     });
+    const yearInput = document.getElementById('yearInput');
+    if (yearInput) {
+        yearInput.value = data.answer;
+    }
 });
 
 function submitAnswer(choice) {
@@ -156,9 +259,10 @@ function submitAnswer(choice) {
 }
 
 socket.on('new-question', (data) => {
+    // Reset all state for new question
     currentQuestionIndex = data.questionNumber - 1;
-    hasAnswered = data.hasAnswered || false;
-    submittedAnswer = data.answer || null;
+    hasAnswered = false; // Reset answer state
+    submittedAnswer = null; // Clear previous answer
     
     document.getElementById('gameScreen').style.display = 'block';
     document.getElementById('questionText').textContent = data.questionText;
@@ -167,25 +271,32 @@ socket.on('new-question', (data) => {
     document.getElementById('gameProgress').textContent = 
         `Fråga ${data.questionNumber} av ${data.totalQuestions}`;
     
-    updateChoicesDisplay(data.choices, hasAnswered, submittedAnswer);
+    // Clear previous content before updating
+    const choicesContainer = document.getElementById('choices');
+    if (choicesContainer) {
+        choicesContainer.innerHTML = '';
+        // Reset any custom styles that might have been applied
+        choicesContainer.style.cssText = `
+            display: grid;
+            gap: 10px;
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+        `;
+    }
+    
+    updateChoicesDisplay(data.choices, hasAnswered, submittedAnswer, data.questionType);
     
     // Remove any winner classes from body
     document.body.classList.remove('gold-winner', 'silver-winner', 'bronze-winner');
 });
 
 socket.on('answer-revealed', (data) => {
-    // Stop the timer animation
     stopTimer();
-
-    // Disable all choice buttons
-    document.querySelectorAll('.choice-button').forEach(btn => {
+    document.querySelectorAll('.choice-button, #yearInput, button').forEach(btn => {
         btn.disabled = true;
     });
     
-    // Keep the timer end message visible
-    // Don't hide the results div here anymore
-    
-    // Update internal score tracking
     const playerResult = data.results.find(result => result.playerName === playerName);
     if (playerResult) {
         totalScore = playerResult.totalScore;
@@ -194,34 +305,25 @@ socket.on('answer-revealed', (data) => {
 
 socket.on('game-over', (players) => {
     const sortedPlayers = players.sort((a, b) => b.score - a.score);
-    
-    // Find current player's position
     const currentPlayerIndex = sortedPlayers.findIndex(p => p.name === playerName);
     
-    // Get top players and current player if not in top
     let playersToShow = sortedPlayers.slice(0, TOP_PLAYERS_TO_SHOW);
     if (currentPlayerIndex >= TOP_PLAYERS_TO_SHOW) {
         playersToShow.push({
             ...sortedPlayers[currentPlayerIndex],
-            showDivider: true // Add flag to show divider
+            showDivider: true
         });
     }
     
-    // Hide game elements
     document.getElementById('choices').style.display = 'none';
     document.getElementById('gameProgress').style.display = 'none';
     
-    // Show medal image for top 3 players
     let medalHtml = '';
     if (currentPlayerIndex < 3) {
-        console.log(`Loading medal image for rank ${currentPlayerIndex + 1}`);
         const medalImg = new Image();
-        medalImg.onload = () => console.log('Medal image loaded successfully');
-        medalImg.onerror = (e) => console.error('Error loading medal image:', e);
         medalImg.src = `/img/${currentPlayerIndex + 1}.png`;
         medalHtml = `<div style="text-align: center;"><img src="/img/${currentPlayerIndex + 1}.png" alt="Medal" style="width: 150px; height: 150px; margin-bottom: 20px; display: block; margin-left: auto; margin-right: auto;"></div>`;
         
-        // Add winner animation class to body
         document.body.classList.remove('gold-winner', 'silver-winner', 'bronze-winner');
         if (currentPlayerIndex === 0) {
             document.body.classList.add('gold-winner');
@@ -232,7 +334,6 @@ socket.on('game-over', (players) => {
         }
     }
     
-    // Create a new container for final scores
     const gameScreen = document.getElementById('gameScreen');
     const finalScoresDiv = document.createElement('div');
     finalScoresDiv.className = 'final-scores';
@@ -251,11 +352,9 @@ socket.on('game-over', (players) => {
         </div>
     `;
     
-    // Clear and append the final scores
     gameScreen.innerHTML = '';
     gameScreen.appendChild(finalScoresDiv);
     
-    // Clear session but don't redirect
     localStorage.removeItem('quizSession');
 });
 

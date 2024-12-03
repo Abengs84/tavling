@@ -19,7 +19,6 @@ const ADMIN_PASSWORD = 'REDACTED';
 const authenticatedAdmins = new Set();
 
 app.use((req, res, next) => {
-    console.log(`[DEBUG] Requesting: ${req.path}`);
     next();
 });
 
@@ -42,6 +41,17 @@ const gameState = {
 };
 
 const POINTS_FOR_CORRECT = 1;
+const MAX_YEAR_POINTS = 10; // Maximum points for exact year match
+
+function calculateYearPoints(submittedYear, correctYear) {
+    const difference = Math.abs(parseInt(submittedYear) - parseInt(correctYear));
+    if (difference === 0) return MAX_YEAR_POINTS;
+    
+    // Calculate points based on how close the answer is
+    // The further away, the fewer points (down to 0)
+    const points = Math.max(0, MAX_YEAR_POINTS - Math.floor(difference / 10));
+    return points;
+}
 
 function validatePlayerName(name) {
     if (name.length < 3) {
@@ -135,11 +145,12 @@ function sendCurrentGameState(socket, playerName = null) {
             questionNumber: gameState.currentQuestionIndex + 1,
             totalQuestions: gameState.questions.length,
             questionText: gameState.currentQuestion.question,
-            choices: gameState.currentQuestion.choices,
+            choices: gameState.currentQuestion.choices || [],
             hasAnswered: hasAnswered,
             answer: playerAnswer?.answer || null,
             score: player?.score || 0,
-            timerState: timerState
+            timerState: timerState,
+            questionType: gameState.currentQuestion.type || 'multiple-choice'
         });
     }
 }
@@ -167,7 +178,6 @@ const server = https.createServer(sslOptions, app);
 const io = socketIO(server);
 
 io.on('connection', (socket) => {
-    console.log('[DEBUG] New socket connection');
 
     socket.on('admin-login', (password) => {
         if (password === ADMIN_PASSWORD) {
@@ -179,7 +189,6 @@ io.on('connection', (socket) => {
     });
 
     socket.on('spectator-join', () => {
-        console.log('[DEBUG] Spectator joined');
         socket.join('spectators');
         if (gameState.isGameStarted) {
             sendCurrentGameState(socket);
@@ -327,30 +336,35 @@ io.on('connection', (socket) => {
         }, 1000);
     });
 
-    function startNewQuestion() {
-        gameState.currentQuestion = gameState.questions[gameState.currentQuestionIndex];
-        gameState.playerAnswers.set(gameState.currentQuestionIndex, new Map());
+function startNewQuestion() {
+    gameState.currentQuestion = gameState.questions[gameState.currentQuestionIndex];
+    gameState.playerAnswers.set(gameState.currentQuestionIndex, new Map());
 
-        io.to('admin').emit('new-question', {
-            questionNumber: gameState.currentQuestionIndex + 1,
-            totalQuestions: gameState.questions.length,
-            questionText: gameState.currentQuestion.question,
-            choices: gameState.currentQuestion.choices,
-            correctAnswer: gameState.currentQuestion.correctAnswer
-        });
+    // Determine if this is a year question
+    const isYearQuestion = gameState.currentQuestion.type === 'year';
+    const questionType = isYearQuestion ? 'year' : 'multiple-choice';
 
-        const questionData = {
-            questionNumber: gameState.currentQuestionIndex + 1,
-            totalQuestions: gameState.questions.length,
-            questionText: gameState.currentQuestion.question,
-            choices: gameState.currentQuestion.choices
-        };
+    // Prepare question data
+    const questionData = {
+        questionNumber: gameState.currentQuestionIndex + 1,
+        totalQuestions: gameState.questions.length,
+        questionText: gameState.currentQuestion.question,
+        choices: isYearQuestion ? [] : gameState.currentQuestion.choices,
+        questionType: questionType
+    };
 
-        io.to('players').emit('new-question', questionData);
-        io.to('spectators').emit('new-question', questionData);
+    // Send to admin with additional data
+    io.to('admin').emit('new-question', {
+        ...questionData,
+        correctAnswer: gameState.currentQuestion.correctAnswer
+    });
 
-        startTimer();
-    }
+    // Send to players and spectators
+    io.to('players').emit('new-question', questionData);
+    io.to('spectators').emit('new-question', questionData);
+
+    startTimer();
+}
 
     socket.on('next-question', () => {
         if (gameState.timerInterval) {
@@ -403,11 +417,22 @@ io.on('connection', (socket) => {
         if (gameState.currentQuestion) {
             const results = [];
             const questionAnswers = gameState.playerAnswers.get(gameState.currentQuestionIndex);
+            const isYearQuestion = gameState.currentQuestion.type === 'year';
             
             if (questionAnswers) {
                 questionAnswers.forEach((answerData, playerName) => {
-                    const isCorrect = answerData.answer === gameState.currentQuestion.correctAnswer;
-                    const points = isCorrect ? POINTS_FOR_CORRECT : 0;
+                    let points = 0;
+                    let isCorrect = false;
+
+                    if (isYearQuestion) {
+                        // For the year question, calculate points based on proximity
+                        points = calculateYearPoints(answerData.answer, gameState.currentQuestion.correctAnswer);
+                        isCorrect = points === MAX_YEAR_POINTS;
+                    } else {
+                        // For regular questions, exact match required
+                        isCorrect = answerData.answer === gameState.currentQuestion.correctAnswer;
+                        points = isCorrect ? POINTS_FOR_CORRECT : 0;
+                    }
                     
                     const playerEntry = Array.from(gameState.players.entries())
                         .find(([_, p]) => p.name === playerName);
