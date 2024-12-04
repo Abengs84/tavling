@@ -3,6 +3,8 @@ let currentChoices = [];
 let allPlayers = new Map(); // Keep track of all players and their scores
 let timerBar = null;
 
+const TOP_PLAYERS_TO_SHOW = 10; // Show top 10 players in leaderboard
+
 function updateChoicesDisplay(choices, correctAnswer = null) {
     const choicesContainer = document.getElementById('choices');
     choicesContainer.innerHTML = '';
@@ -53,7 +55,8 @@ function displayLeaderboard(results) {
     // Convert Map to array and sort by score
     const sortedPlayers = Array.from(allPlayers.entries())
         .map(([name, score]) => ({ name, score }))
-        .sort((a, b) => b.score - a.score);
+        .sort((a, b) => b.score - a.score)
+        .slice(0, TOP_PLAYERS_TO_SHOW); // Only show top 10 players
 
     const leaderboard = document.getElementById('leaderboard');
     leaderboard.innerHTML = `
@@ -66,6 +69,7 @@ function displayLeaderboard(results) {
             </div>
         `).join('')}
     `;
+    leaderboard.style.display = 'block';
 }
 
 socket.on('game-state', (state) => {
@@ -77,7 +81,7 @@ socket.on('game-state', (state) => {
     updateChoicesDisplay(state.choices);
     document.getElementById('results').style.display = 'none';
     document.getElementById('choices').style.display = 'grid';
-    document.getElementById('leaderboard').innerHTML = '';
+    document.getElementById('leaderboard').style.display = 'none';
 
     if (state.timerState) {
         updateTimerBar(state.timerState.timeLeft, state.timerState.totalTime);
@@ -108,7 +112,7 @@ socket.on('new-question', (data) => {
     updateChoicesDisplay(data.choices);
     document.getElementById('results').style.display = 'none';
     document.getElementById('choices').style.display = 'grid';
-    document.getElementById('leaderboard').innerHTML = '';
+    document.getElementById('leaderboard').style.display = 'none';
 });
 
 socket.on('answer-revealed', (data) => {
@@ -118,9 +122,9 @@ socket.on('answer-revealed', (data) => {
     // Keep choices visible
     document.getElementById('choices').style.display = 'grid';
     
-    // Hide results during game
+    // Hide results and leaderboard during game
     document.getElementById('results').style.display = 'none';
-    document.getElementById('leaderboard').innerHTML = '';
+    document.getElementById('leaderboard').style.display = 'none';
 });
 
 socket.on('game-over', (data) => {
@@ -128,6 +132,7 @@ socket.on('game-over', (data) => {
     document.getElementById('choices').style.display = 'none';
     document.getElementById('gameProgress').style.display = 'none';
     document.getElementById('results').style.display = 'none';
+    document.getElementById('timer-container').style.display = 'none';
     
     // Convert players array to the format displayLeaderboard expects and show final scores
     const results = data.map(player => ({
@@ -135,7 +140,6 @@ socket.on('game-over', (data) => {
         totalScore: player.score
     }));
     displayLeaderboard(results);
-    document.getElementById('leaderboard').style.display = 'block';
 });
 
 // Handle player joined/left events to track all players

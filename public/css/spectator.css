@@ -115,6 +115,7 @@ html, body {
 #leaderboard {
     background: rgba(44, 62, 80, 0.5);
     border-radius: 10px;
+    text-align: center;
 }
 
 #leaderboard h2 {
@@ -127,7 +128,7 @@ html, body {
     display: grid;
     grid-template-columns: 120px 1fr 300px;
     margin: 0rem auto;
-    padding: 1rem;
+    padding: 0rem;
     background: rgba(52, 152, 219, 0.1);
     border-radius: 12px;
     font-size: 2.5rem;
@@ -156,9 +157,32 @@ html, body {
     transform: scale(0.85);
 }
 
+.leaderboard-entry.rank-4 {
+    transform: scale(0.8);
+}
+
+.leaderboard-entry.rank-5 {
+    transform: scale(0.8);
+}
+.leaderboard-entry.rank-6 {
+    transform: scale(0.8);
+}
+.leaderboard-entry.rank-7 {
+    transform: scale(0.8);
+}
+.leaderboard-entry.rank-8 {
+    transform: scale(0.8);
+}
+.leaderboard-entry.rank-9 {
+    transform: scale(0.8);
+}
+.leaderboard-entry.rank-10 {
+    transform: scale(0.8);
+}
+
 .leaderboard-position {
     font-weight: bold;
-    font-size: 3rem;
+    /* font-size: 3rem; */
 }
 
 /* Position-specific colors */
