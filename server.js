@@ -37,20 +37,20 @@ const gameState = {
     playerSessions: new Map(), // Map<name, {sessionId, score}>
     timerInterval: null,
     timerStartTime: null,  // Track when timer started
-    timeLeft: QUESTION_TIMER  // Track remaining time
+    timeLeft: QUESTION_TIMER,  // Track remaining time
+    yearProximities: new Map() // Track year proximities for tiebreaker
 };
 
 const POINTS_FOR_CORRECT = 1;
-const MAX_YEAR_POINTS = 10; // Maximum points for exact year match
+const YEAR_POINTS = 2; // Points for correct year guess
 
 function calculateYearPoints(submittedYear, correctYear) {
     const difference = Math.abs(parseInt(submittedYear) - parseInt(correctYear));
-    if (difference === 0) return MAX_YEAR_POINTS;
-    
-    // Calculate points based on how close the answer is
-    // The further away, the fewer points (down to 0)
-    const points = Math.max(0, MAX_YEAR_POINTS - Math.floor(difference / 10));
-    return points;
+    // Only award points for exact match, but store proximity for potential tiebreaker
+    return {
+        points: difference === 0 ? YEAR_POINTS : 0,
+        proximity: difference
+    };
 }
 
 function validatePlayerName(name) {
@@ -327,6 +327,7 @@ io.on('connection', (socket) => {
         gameState.questions = loadQuestions();
         gameState.isGameStarted = true;
         gameState.playerAnswers.clear();
+        gameState.yearProximities.clear();
         
         broadcastScores();
         io.emit('game-started');
@@ -375,12 +376,24 @@ function startNewQuestion() {
         if (gameState.currentQuestionIndex < gameState.questions.length) {
             startNewQuestion();
         } else {
-            const finalPlayers = Array.from(gameState.players.values());
+            // Sort players by score first, then by year proximity if tied at 9 points
+            const finalPlayers = Array.from(gameState.players.values())
+                .sort((a, b) => {
+                    if (a.score === b.score && a.score === 8) {
+                        // If tied at 8 points, use year proximity as tiebreaker
+                        const aProximity = gameState.yearProximities.get(a.name) || Infinity;
+                        const bProximity = gameState.yearProximities.get(b.name) || Infinity;
+                        return aProximity - bProximity;
+                    }
+                    return b.score - a.score;
+                });
+            
             io.emit('game-over', finalPlayers);
             gameState.isGameStarted = false;
             gameState.playerAnswers.clear();
             gameState.playerSessions.clear();
             gameState.timerStartTime = null;
+            gameState.yearProximities.clear();
             io.emit('game-ended');
         }
     });
@@ -425,9 +438,13 @@ function startNewQuestion() {
                     let isCorrect = false;
 
                     if (isYearQuestion) {
-                        // For the year question, calculate points based on proximity
-                        points = calculateYearPoints(answerData.answer, gameState.currentQuestion.correctAnswer);
-                        isCorrect = points === MAX_YEAR_POINTS;
+                        // For the year question, calculate points and proximity
+                        const yearResult = calculateYearPoints(answerData.answer, gameState.currentQuestion.correctAnswer);
+                        points = yearResult.points;
+                        isCorrect = points === YEAR_POINTS;
+                        
+                        // Store proximity for potential tiebreaker
+                        gameState.yearProximities.set(playerName, yearResult.proximity);
                     } else {
                         // For regular questions, exact match required
                         isCorrect = answerData.answer === gameState.currentQuestion.correctAnswer;

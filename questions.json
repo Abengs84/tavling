@@ -90,20 +90,9 @@
     },
     {
       "id": 9,
-      "question": "Vilken muskel i fiskens huvud anses vara en delikatess?",
-      "choices": [
-        "Nacke",
-        "Kind",
-        "Tunga",
-        "Hals"
-      ],
-      "correctAnswer": "Kind"
-    },
-    {
-      "id": 10,
-      "question": "Vilket år grundades Vasa stad?",
+      "question": "Vilket årtal föddes Johan Ludvig Runeberg?",
       "type": "year",
-      "correctAnswer": "1606"
+      "correctAnswer": "1804"
     }
   ]
 }

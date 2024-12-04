@@ -17,7 +17,7 @@ A real-time quiz application with admin control, player participation, and spect
 - Join with custom name
 - Answer questions within time limit
 - Multiple choice for standard questions
-- Special year input for final question with proximity-based scoring
+- Special year input for final question
 - See confirmation when time runs out
 - View final scores at game end
 
@@ -36,21 +36,20 @@ A real-time quiz application with admin control, player participation, and spect
 - "Tiden är ute" confirmation after countdown
 
 ### Scoring System
-- Standard Questions (1-9):
-  * Fixed points for correct answers
+- Standard Questions (1-8):
+  * 1 point for correct answers
   * No points for incorrect answers
 
-- Final Year Question (Question 10):
-  * Proximity-based scoring
-  * 10 points for exact match
-  * -1 point per decade difference from correct year
-  * Examples:
-    - 1606 = 10 points (exact match)
-    - 1610 = 9 points (4 years off)
-    - 1620 = 8 points (14 years off)
-    - 1650 = 5 points (44 years off)
-    - 1706 = 0 points (100 years off)
-  * Helps differentiate tied players based on historical knowledge
+- Final Year Question (Question 9):
+  * 2 points for exact match only
+  * No points for incorrect answers
+  * For players tied at 8 points, proximity to correct year is used as a tiebreaker
+  * Example:
+    - If Player A and Player B both have 9 points:
+    - Player A guesses 1800 (4 years off)
+    - Player B guesses 1810 (6 years off)
+    - Player A wins the tiebreaker due to closer guess
+    - Note: No additional points are awarded for proximity
 
 ## Installation
 
@@ -144,12 +143,11 @@ Example format:
 
 ## Recent Updates
 
-### Year Input Question
-- Special input field for final question
-- Proximity-based scoring system
-- Immediate visual feedback and answer locking
-- Keyboard support with Enter key
-- Improved UI with single-column layout
+### Year Question Scoring Update
+- Changed to simple 2-point system for exact matches
+- Added internal tiebreaker system using proximity for players tied at 8 points
+- Removed previous 10-point proximity-based scoring system
+- No points awarded for non-exact matches
 
 ### HTTPS Support
 - Secure connections using Synology NAS SSL certificates
@@ -171,7 +169,7 @@ Example format:
 
 ### Final Results
 - Complete scores shown only at game end
-- Detailed breakdown of proximity-based scoring for year question
+- Final rankings consider proximity-based tiebreaker for players tied at 8 points
 
 ## Browser Support
 - Works on modern browsers with WebSocket support
