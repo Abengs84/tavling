@@ -143,6 +143,11 @@ Example format:
 
 ## Recent Updates
 
+### Configuration Refactoring
+- Moved all configuration constants to separate config.js file
+- Centralized SSL, server, and game settings
+- Improved maintainability and configuration management
+
 ### Year Question Scoring Update
 - Changed to simple 2-point system for exact matches
 - Added internal tiebreaker system using proximity for players tied at 8 points

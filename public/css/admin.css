@@ -54,6 +54,46 @@ body {
     padding: 10px;
 }
 
+.admin-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.warning-button, .danger-button {
+    flex: 1;
+    padding: 12px;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.warning-button {
+    background: #ffc107;
+}
+
+.warning-button:hover {
+    background: #e0a800;
+}
+
+.danger-button {
+    background: #dc3545;
+}
+
+.danger-button:hover {
+    background: #c82333;
+}
+
+.warning-button:disabled, .danger-button:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
 .timer-container {
     width: 100%;
     height: 10px;

@@ -4,16 +4,8 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 const socketIO = require('socket.io');
-
-// SSL certificate configuration
-const sslOptions = {
-    cert: fs.readFileSync('/etc/pki/tls/cert.pem'),
-    key: fs.readFileSync('/etc/pki/tls/privkey.pem'),
-    ca: fs.readFileSync('/etc/pki/tls/chain.pem')
-};
-
-// Admin password - this should be stored securely in production
-const ADMIN_PASSWORD = 'REDACTED';
+const { exec } = require('child_process');
+const config = require('./config');
 
 // Track authenticated admin sockets
 const authenticatedAdmins = new Set();
@@ -23,8 +15,6 @@ app.use((req, res, next) => {
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
-
-const QUESTION_TIMER = 30; // 30 seconds per question
 
 const gameState = {
     questions: [],
@@ -37,18 +27,15 @@ const gameState = {
     playerSessions: new Map(), // Map<name, {sessionId, score}>
     timerInterval: null,
     timerStartTime: null,  // Track when timer started
-    timeLeft: QUESTION_TIMER,  // Track remaining time
+    timeLeft: config.QUESTION_TIMER,  // Track remaining time
     yearProximities: new Map() // Track year proximities for tiebreaker
 };
-
-const POINTS_FOR_CORRECT = 1;
-const YEAR_POINTS = 2; // Points for correct year guess
 
 function calculateYearPoints(submittedYear, correctYear) {
     const difference = Math.abs(parseInt(submittedYear) - parseInt(correctYear));
     // Only award points for exact match, but store proximity for potential tiebreaker
     return {
-        points: difference === 0 ? YEAR_POINTS : 0,
+        points: difference === 0 ? config.YEAR_POINTS : 0,
         proximity: difference
     };
 }
@@ -95,8 +82,8 @@ function emitPlayerCount() {
 
 function startTimer() {
     gameState.timerStartTime = Date.now();
-    gameState.timeLeft = QUESTION_TIMER;
-    io.emit('timer-start', QUESTION_TIMER);
+    gameState.timeLeft = config.QUESTION_TIMER;
+    io.emit('timer-start', config.QUESTION_TIMER);
     
     if (gameState.timerInterval) {
         clearInterval(gameState.timerInterval);
@@ -123,11 +110,11 @@ function getCurrentTimerState() {
     }
     
     const elapsed = Math.floor((Date.now() - gameState.timerStartTime) / 1000);
-    const remaining = Math.max(0, QUESTION_TIMER - elapsed);
+    const remaining = Math.max(0, config.QUESTION_TIMER - elapsed);
     
     return {
         timeLeft: remaining,
-        totalTime: QUESTION_TIMER
+        totalTime: config.QUESTION_TIMER
     };
 }
 
@@ -174,13 +161,42 @@ function broadcastScores() {
 }
 
 // Create HTTPS server
-const server = https.createServer(sslOptions, app);
+const server = https.createServer(config.SSL_OPTIONS, app);
 const io = socketIO(server);
 
-io.on('connection', (socket) => {
+function startNewQuestion() {
+    gameState.currentQuestion = gameState.questions[gameState.currentQuestionIndex];
+    gameState.playerAnswers.set(gameState.currentQuestionIndex, new Map());
 
+    // Determine if this is a year question
+    const isYearQuestion = gameState.currentQuestion.type === 'year';
+    const questionType = isYearQuestion ? 'year' : 'multiple-choice';
+
+    // Prepare question data
+    const questionData = {
+        questionNumber: gameState.currentQuestionIndex + 1,
+        totalQuestions: gameState.questions.length,
+        questionText: gameState.currentQuestion.question,
+        choices: isYearQuestion ? [] : gameState.currentQuestion.choices,
+        questionType: questionType
+    };
+
+    // Send to admin with additional data
+    io.to('admin').emit('new-question', {
+        ...questionData,
+        correctAnswer: gameState.currentQuestion.correctAnswer
+    });
+
+    // Send to players and spectators
+    io.to('players').emit('new-question', questionData);
+    io.to('spectators').emit('new-question', questionData);
+
+    startTimer();
+}
+
+io.on('connection', (socket) => {
     socket.on('admin-login', (password) => {
-        if (password === ADMIN_PASSWORD) {
+        if (password === config.ADMIN_PASSWORD) {
             authenticatedAdmins.add(socket.id);
             socket.emit('admin-login-response', { success: true });
         } else {
@@ -337,36 +353,6 @@ io.on('connection', (socket) => {
         }, 1000);
     });
 
-function startNewQuestion() {
-    gameState.currentQuestion = gameState.questions[gameState.currentQuestionIndex];
-    gameState.playerAnswers.set(gameState.currentQuestionIndex, new Map());
-
-    // Determine if this is a year question
-    const isYearQuestion = gameState.currentQuestion.type === 'year';
-    const questionType = isYearQuestion ? 'year' : 'multiple-choice';
-
-    // Prepare question data
-    const questionData = {
-        questionNumber: gameState.currentQuestionIndex + 1,
-        totalQuestions: gameState.questions.length,
-        questionText: gameState.currentQuestion.question,
-        choices: isYearQuestion ? [] : gameState.currentQuestion.choices,
-        questionType: questionType
-    };
-
-    // Send to admin with additional data
-    io.to('admin').emit('new-question', {
-        ...questionData,
-        correctAnswer: gameState.currentQuestion.correctAnswer
-    });
-
-    // Send to players and spectators
-    io.to('players').emit('new-question', questionData);
-    io.to('spectators').emit('new-question', questionData);
-
-    startTimer();
-}
-
     socket.on('next-question', () => {
         if (gameState.timerInterval) {
             clearInterval(gameState.timerInterval);
@@ -376,7 +362,7 @@ function startNewQuestion() {
         if (gameState.currentQuestionIndex < gameState.questions.length) {
             startNewQuestion();
         } else {
-            // Sort players by score first, then by year proximity if tied at 9 points
+            // Sort players by score first, then by year proximity if tied at 8 points
             const finalPlayers = Array.from(gameState.players.values())
                 .sort((a, b) => {
                     if (a.score === b.score && a.score === 8) {
@@ -441,14 +427,14 @@ function startNewQuestion() {
                         // For the year question, calculate points and proximity
                         const yearResult = calculateYearPoints(answerData.answer, gameState.currentQuestion.correctAnswer);
                         points = yearResult.points;
-                        isCorrect = points === YEAR_POINTS;
+                        isCorrect = points === config.YEAR_POINTS;
                         
                         // Store proximity for potential tiebreaker
                         gameState.yearProximities.set(playerName, yearResult.proximity);
                     } else {
                         // For regular questions, exact match required
                         isCorrect = answerData.answer === gameState.currentQuestion.correctAnswer;
-                        points = isCorrect ? POINTS_FOR_CORRECT : 0;
+                        points = isCorrect ? config.POINTS_FOR_CORRECT : 0;
                     }
                     
                     const playerEntry = Array.from(gameState.players.entries())
@@ -497,12 +483,75 @@ function startNewQuestion() {
             }
         }
     });
+
+    // Handle server restart
+    socket.on('restart-server', () => {
+        // Check if the socket is authenticated as admin
+        if (!authenticatedAdmins.has(socket.id)) {
+            return;
+        }
+
+        // Notify all clients that server is restarting
+        io.emit('restart-initiated');
+
+        // Kill any existing process on the port and start new server
+        exec(`lsof -ti:${config.PORT} | xargs kill -9`, (error) => {
+            if (error) {
+                console.error('Error killing existing process:', error);
+                return;
+            }
+
+            // Close all socket connections
+            io.close(() => {
+                console.log('All connections closed');
+
+                // Start the new server process
+                const scriptPath = path.join(__dirname, 'server.js');
+                exec(`sudo node ${scriptPath}`, (error, stdout, stderr) => {
+                    if (error) {
+                        console.error('Error starting new server:', error);
+                        return;
+                    }
+                    console.log('New server process started');
+                });
+            });
+
+            // Exit the current process after a short delay
+            setTimeout(() => {
+                process.exit(0);
+            }, 1000);
+        });
+    });
+
+    socket.on('shutdown-server', () => {
+        // Check if the socket is authenticated as admin
+        if (!authenticatedAdmins.has(socket.id)) {
+            return;
+        }
+
+        // Notify all clients that server is shutting down
+        io.emit('shutdown-initiated');
+
+        // Kill any existing process on the port and exit
+        exec(`lsof -ti:${config.PORT} | xargs kill -9`, (error) => {
+            if (error) {
+                console.error('Error killing existing process:', error);
+                return;
+            }
+
+            // Close all socket connections
+            io.close(() => {
+                console.log('All connections closed');
+                // Exit the process
+                process.exit(0);
+            });
+        });
+    });
 });
 
-const PORT = 8060;
-const exec = require('child_process').exec;
-exec(`lsof -ti:${PORT} | xargs kill -9`, (error) => {
-    server.listen(PORT, () => {
-        console.log(`HTTPS Server running on port ${PORT}`);
+// Kill any existing process on the port before starting
+exec(`lsof -ti:${config.PORT} | xargs kill -9`, (error) => {
+    server.listen(config.PORT, () => {
+        console.log(`HTTPS Server running on port ${config.PORT}`);
     });
 });

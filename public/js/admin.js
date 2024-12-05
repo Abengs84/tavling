@@ -234,3 +234,28 @@ document.getElementById('password').addEventListener('keypress', function(e) {
         document.getElementById('loginButton').click();
     }
 });
+
+// Handle server restart
+document.getElementById('restartServer').addEventListener('click', () => {
+    if (confirm('Är du säker på att du vill starta om servern? Alla anslutna spelare kommer att kopplas bort.')) {
+        socket.emit('restart-server');
+    }
+});
+
+// Handle server shutdown
+document.getElementById('shutdownServer').addEventListener('click', () => {
+    if (confirm('Är du säker på att du vill stänga av servern? Alla anslutna spelare kommer att kopplas bort och servern måste startas om manuellt.')) {
+        socket.emit('shutdown-server');
+    }
+});
+
+// Handle server restart/shutdown responses
+socket.on('restart-initiated', () => {
+    alert('Servern startas om...');
+    window.location.reload();
+});
+
+socket.on('shutdown-initiated', () => {
+    alert('Servern stängs av...');
+    window.location.href = '/index.html';
+});
