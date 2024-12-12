@@ -127,7 +127,7 @@ Example format:
 - Spectator: Large-format display focused on questions
 
 ### Timer System
-- 30-second countdown per question
+- 15-second countdown per question
 - Admin can reveal answer during countdown
 - Timer synchronizes across all views
 - Visual progress bar with smooth animation
@@ -180,3 +180,32 @@ Example format:
 - Works on modern browsers with WebSocket support
 - Responsive design for different screen sizes
 - Optimized for 1080p displays (spectator view)
+
+## Code Organization:
+
+1. Server Core (root directory):
+
+- server.js: Main server setup, socket handling, and route management
+- config.js: Configuration settings (ports, passwords, game settings)
+
+2. State Management (state/):
+
+- gameState.js: Central game state management (players, scores, questions)
+
+3. Handlers (handlers/):
+
+- socketHandlers.js: Socket event handling for game actions
+- playerHandlers.js: Player-specific logic (joining, reconnection)
+
+4. Utils (utils/):
+
+- scoring.js: Score calculation and management
+- broadcast.js: Socket broadcast utilities
+- game.js: Game logic utilities
+- timer.js: Timer management
+
+5. Client-side (public/):
+
+- HTML: admin.html, game.html, spectator.html
+- CSS: admin.css, game.css, spectator.css
+- JavaScript: admin.js, game.js, spectator.js

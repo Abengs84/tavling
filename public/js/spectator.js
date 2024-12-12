@@ -5,7 +5,7 @@ let timerBar = null;
 
 const TOP_PLAYERS_TO_SHOW = 10; // Show top 10 players in leaderboard
 
-function updateChoicesDisplay(choices, correctAnswer = null) {
+function updateChoicesDisplay(choices) {
     const choicesContainer = document.getElementById('choices');
     choicesContainer.innerHTML = '';
     choices.forEach(choice => {
@@ -20,7 +20,6 @@ function updateTimerBar(timeLeft, totalTime) {
     const timerBar = document.getElementById('timerBar');
     const timerContainer = document.getElementById('timer-container');
     
-    // Show the timer container and bar
     timerContainer.style.display = 'block';
     timerBar.style.display = 'block';
     
@@ -46,25 +45,16 @@ function stopTimer() {
     timerBar.style.width = currentWidth;
 }
 
-function displayLeaderboard(results) {
-    // Update scores for players who answered
-    results.forEach(result => {
-        allPlayers.set(result.playerName, result.totalScore);
-    });
-
-    // Convert Map to array and sort by score
-    const sortedPlayers = Array.from(allPlayers.entries())
-        .map(([name, score]) => ({ name, score }))
-        .sort((a, b) => b.score - a.score)
-        .slice(0, TOP_PLAYERS_TO_SHOW); // Only show top 10 players
-
+function displayLeaderboard(players) {
     const leaderboard = document.getElementById('leaderboard');
     leaderboard.innerHTML = `
         <h2>Slutresultat</h2>
-        ${sortedPlayers.map((player, index) => `
+        ${players.slice(0, TOP_PLAYERS_TO_SHOW).map((player, index) => `
             <div class="leaderboard-entry rank-${index + 1}">
                 <div class="leaderboard-position">${index + 1}</div>
-                <div class="leaderboard-name">${player.name}</div>
+                <div class="leaderboard-name">
+                    ${player.name}${player.connected === false ? ' (frånkopplad)' : ''}
+                </div>
                 <div class="leaderboard-score">${player.score} poäng</div>
             </div>
         `).join('')}
@@ -116,39 +106,22 @@ socket.on('new-question', (data) => {
 });
 
 socket.on('answer-revealed', (data) => {
-    // Stop the timer animation
     stopTimer();
     
-    // Keep choices visible
-    document.getElementById('choices').style.display = 'grid';
-    
-    // Hide results and leaderboard during game
-    document.getElementById('results').style.display = 'none';
-    document.getElementById('leaderboard').style.display = 'none';
+    // Update scores based on results
+    data.results.forEach(result => {
+        allPlayers.set(result.playerName, result.totalScore);
+    });
 });
 
-socket.on('game-over', (data) => {
+socket.on('game-over', (players) => {
     document.getElementById('questionText').textContent = 'Quiz Avslutat';
     document.getElementById('choices').style.display = 'none';
     document.getElementById('gameProgress').style.display = 'none';
     document.getElementById('results').style.display = 'none';
     document.getElementById('timer-container').style.display = 'none';
     
-    // Convert players array to the format displayLeaderboard expects and show final scores
-    const results = data.map(player => ({
-        playerName: player.name,
-        totalScore: player.score
-    }));
-    displayLeaderboard(results);
-});
-
-// Handle player joined/left events to track all players
-socket.on('player-joined', (data) => {
-    allPlayers.set(data.name, data.score);
-});
-
-socket.on('player-left', (data) => {
-    allPlayers.delete(data.name);
+    displayLeaderboard(players);
 });
 
 // Connect as spectator

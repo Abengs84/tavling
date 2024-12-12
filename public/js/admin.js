@@ -10,6 +10,13 @@ document.getElementById('loginButton').addEventListener('click', () => {
     socket.emit('admin-login', password);
 });
 
+// Handle Enter key in password input
+document.getElementById('password').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        document.getElementById('loginButton').click();
+    }
+});
+
 // Handle login response
 socket.on('admin-login-response', (response) => {
     if (response.success) {
@@ -119,7 +126,10 @@ function updatePlayerList(players) {
     players.forEach(player => {
         const li = document.createElement('li');
         li.id = `player-${player.id}`;
-        li.innerHTML = `${player.name} <span class="player-score">${player.score} poäng</span>`;
+        const disconnectedClass = player.connected === false ? 'disconnected' : '';
+        const disconnectedText = player.connected === false ? ' (frånkopplad)' : '';
+        li.className = disconnectedClass;
+        li.innerHTML = `${player.name}${disconnectedText} <span class="player-score">${player.score} poäng</span>`;
         playersList.appendChild(li);
     });
 }
@@ -200,7 +210,7 @@ socket.on('game-over', (players) => {
     document.getElementById('questionDetails').innerHTML = `
         <h2>Slutresultat</h2>
         ${sortedPlayers.map((p, i) => `
-            <div>${i + 1}. ${p.name}: ${p.score} poäng</div>
+            <div>${i + 1}. ${p.name}${p.connected === false ? ' (frånkopplad)' : ''}: ${p.score} poäng</div>
         `).join('')}
     `;
     enableOnlyStartGame();
@@ -219,7 +229,7 @@ document.getElementById('revealAnswer').addEventListener('click', () => {
 
 document.getElementById('nextQuestion').addEventListener('click', () => {
     if (document.getElementById('nextQuestion').textContent === 'Avsluta spelet') {
-        socket.emit('next-question');
+        socket.emit('end-game');
         document.getElementById('nextQuestion').disabled = true;
         document.getElementById('nextQuestion').textContent = 'Nästa fråga';
     } else {
@@ -228,11 +238,9 @@ document.getElementById('nextQuestion').addEventListener('click', () => {
     }
 });
 
-// Handle Enter key in password input
-document.getElementById('password').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        document.getElementById('loginButton').click();
-    }
+socket.on('last-question-reached', () => {
+    document.getElementById('nextQuestion').textContent = 'Avsluta spelet';
+    document.getElementById('nextQuestion').disabled = false;
 });
 
 // Handle server restart
