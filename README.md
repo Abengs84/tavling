@@ -45,7 +45,7 @@ A real-time quiz application with admin control, player participation, and spect
   * No points for incorrect answers
   * For players tied at 8 points, proximity to correct year is used as a tiebreaker
   * Example:
-    - If Player A and Player B both have 9 points:
+    - If Player A and Player B both have 8 points:
     - Player A guesses 1800 (4 years off)
     - Player B guesses 1810 (6 years off)
     - Player A wins the tiebreaker due to closer guess

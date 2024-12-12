@@ -16,7 +16,7 @@ module.exports = {
     SSL_OPTIONS: sslOptions,
 
     // Game settings
-    QUESTION_TIMER: 30,  // 30 seconds per question
+    QUESTION_TIMER: 15,  // seconds per question
     POINTS_FOR_CORRECT: 1,
     YEAR_POINTS: 2  // Points for correct year guess
 };
