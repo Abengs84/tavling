@@ -59,6 +59,46 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('admin-connect', () => {
+        if (authenticatedAdmins.has(socket.id)) {
+            if (gameState.isGameStarted) {
+                // Send current game state to admin
+                socket.emit('game-state', {
+                    questionNumber: gameState.currentQuestionIndex + 1,
+                    totalQuestions: gameState.questions.length,
+                    questionText: gameState.currentQuestion.question,
+                    choices: gameState.currentQuestion.type === 'year' ? [] : gameState.currentQuestion.choices,
+                    correctAnswer: gameState.currentQuestion.correctAnswer,
+                    isLastQuestion: gameState.currentQuestionIndex === gameState.questions.length - 1
+                });
+
+                // Send current player answers if any
+                const currentAnswers = gameState.playerAnswers.get(gameState.currentQuestionIndex);
+                if (currentAnswers) {
+                    currentAnswers.forEach((answerData, playerName) => {
+                        socket.emit('player-answered', {
+                            playerName: playerName,
+                            answer: answerData.answer
+                        });
+                    });
+                }
+
+                // Send current players list
+                const players = Array.from(gameState.players.values()).map(player => ({
+                    id: player.sessionId,
+                    name: player.name,
+                    score: player.score
+                }));
+                socket.emit('current-players', players);
+
+                // If we're at the last question, update button state
+                if (gameState.currentQuestionIndex === gameState.questions.length - 1) {
+                    socket.emit('last-question-reached');
+                }
+            }
+        }
+    });
+
     socket.on('start-game', () => {
         if (authenticatedAdmins.has(socket.id)) {
             handleStartGame(io, socket);
@@ -71,7 +111,7 @@ io.on('connection', (socket) => {
                 gameState.currentQuestionIndex++;
                 startNewQuestion(io);
             } else {
-                // Just notify admin that we're at the end, allowing them to use 'Avsluta tävlingen'
+                // Just notify admin that we're at the end
                 socket.emit('last-question-reached');
             }
         }
