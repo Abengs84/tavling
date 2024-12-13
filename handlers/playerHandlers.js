@@ -12,11 +12,14 @@ function handlePlayerJoin(io, socket, playerName) {
 
     // Check if player is reconnecting
     const existingSession = gameState.playerSessions.get(playerName);
-    if (existingSession) {
+    const isDisconnected = Array.from(gameState.disconnectedPlayers.values()).some(p => p.name === playerName);
+    
+    if (existingSession || isDisconnected) {
         socket.emit('join-error', 'Du är redan med i spelet. Använd återanslut om du tappat anslutningen.');
         return;
     }
 
+    // Create new player session
     gameState.players.set(socket.id, {
         name: playerName,
         score: 0
@@ -24,14 +27,18 @@ function handlePlayerJoin(io, socket, playerName) {
 
     gameState.playerSessions.set(playerName, {
         sessionId: socket.id,
-        score: 0
+        score: 0,
+        currentQuestionIndex: gameState.currentQuestionIndex,
+        hasAnswered: false
     });
 
     socket.join('players');
     socket.emit('player-welcome', {
         name: playerName,
         gameInProgress: gameState.isGameStarted,
-        sessionId: socket.id
+        sessionId: socket.id,
+        score: 0,
+        currentQuestionIndex: gameState.currentQuestionIndex
     });
 
     io.to('admin').emit('player-joined', {
@@ -51,6 +58,8 @@ function handleStartGame(io, socket) {
         const session = gameState.playerSessions.get(player.name);
         if (session) {
             session.score = 0;
+            session.currentQuestionIndex = 0;
+            session.hasAnswered = false;
         }
     });
 
@@ -76,6 +85,12 @@ function handleStartGame(io, socket) {
 function startNewQuestion(io) {
     gameState.currentQuestion = gameState.questions[gameState.currentQuestionIndex];
     gameState.playerAnswers.set(gameState.currentQuestionIndex, new Map());
+
+    // Update all player sessions with new question index
+    gameState.playerSessions.forEach(session => {
+        session.currentQuestionIndex = gameState.currentQuestionIndex;
+        session.hasAnswered = false;
+    });
 
     const isYearQuestion = gameState.currentQuestion.type === 'year';
     const questionType = isYearQuestion ? 'year' : 'multiple-choice';
@@ -106,9 +121,16 @@ function getCurrentGameState(playerName) {
         return null;
     }
 
+    const session = gameState.playerSessions.get(playerName);
     const answers = gameState.playerAnswers.get(gameState.currentQuestionIndex);
     const hasAnswered = answers?.has(playerName) || false;
     const answer = hasAnswered ? answers.get(playerName).answer : null;
+
+    // Update session with current state
+    if (session) {
+        session.hasAnswered = hasAnswered;
+        session.currentQuestionIndex = gameState.currentQuestionIndex;
+    }
 
     return {
         currentQuestionIndex: gameState.currentQuestionIndex,
@@ -118,7 +140,8 @@ function getCurrentGameState(playerName) {
         choices: gameState.currentQuestion.type === 'year' ? [] : gameState.currentQuestion.choices,
         questionType: gameState.currentQuestion.type || 'multiple-choice',
         hasAnswered: hasAnswered,
-        answer: answer
+        answer: answer,
+        score: session?.score || 0
     };
 }
 

@@ -14,8 +14,17 @@ window.onload = function() {
     // Check for existing session
     const savedSession = localStorage.getItem('quizSession');
     if (savedSession) {
-        const sessionData = JSON.parse(savedSession);
-        socket.emit('verify-session', sessionData);
+        try {
+            const sessionData = JSON.parse(savedSession);
+            // Only verify if we have both name and sessionId
+            if (sessionData.name && sessionData.sessionId) {
+                socket.emit('verify-session', sessionData);
+            } else {
+                localStorage.removeItem('quizSession');
+            }
+        } catch (e) {
+            localStorage.removeItem('quizSession');
+        }
     }
 };
 
@@ -76,12 +85,16 @@ socket.on('session-verified', (isValid) => {
 socket.on('player-welcome', (data) => {
     playerName = data.name;
     
-    // Save session data
-    localStorage.setItem('quizSession', JSON.stringify({
+    // Save complete session data
+    const sessionData = {
         name: playerName,
         sessionId: data.sessionId,
-        score: data.score || 0
-    }));
+        score: data.score || 0,
+        currentQuestionIndex: data.currentQuestionIndex,
+        gameInProgress: data.gameInProgress
+    };
+    
+    localStorage.setItem('quizSession', JSON.stringify(sessionData));
 
     document.getElementById('welcomePlayerName').textContent = playerName;
     
@@ -95,6 +108,14 @@ socket.on('player-welcome', (data) => {
 });
 
 socket.on('game-started', () => {
+    // Update session with game state before redirecting
+    const sessionData = JSON.parse(localStorage.getItem('quizSession'));
+    if (sessionData) {
+        sessionData.gameInProgress = true;
+        sessionData.currentQuestionIndex = 0;
+        localStorage.setItem('quizSession', JSON.stringify(sessionData));
+    }
+    
     // Game is starting, go to game page
     socket.close(); // Close socket before redirect
     window.location.href = '/game.html';
@@ -108,6 +129,7 @@ socket.on('connection-error', function(error) {
     const errorMessage = document.getElementById('errorMessage');
     errorMessage.textContent = error;
     errorMessage.style.display = 'block';
+    localStorage.removeItem('quizSession');
 });
 
 // Handle Enter key in name input

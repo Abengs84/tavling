@@ -5,21 +5,29 @@ let playerName = '';
 let sessionId = '';
 let currentQuestionIndex = -1;
 let submittedAnswer = null;
+let gameInProgress = false;
 
 const TOP_PLAYERS_TO_SHOW = 5;
 
-// Check for existing session and reconnect
-window.onload = function() {
-    const savedSession = localStorage.getItem('quizSession');
-    if (savedSession) {
-        const sessionData = JSON.parse(savedSession);
-        playerName = sessionData.name;
-        document.getElementById('gameScreen').style.display = 'block';
-        socket.emit('reconnect-player', sessionData);
-    } else {
-        window.location.href = '/index.html';
-    }
-};
+function redirectToIndex(error = '') {
+    localStorage.removeItem('quizSession');
+    window.location.href = error ? 
+        `/index.html?error=${encodeURIComponent(error)}` : 
+        '/index.html';
+}
+
+function updateSessionStorage() {
+    const sessionData = {
+        name: playerName,
+        sessionId: sessionId,
+        score: totalScore,
+        currentQuestionIndex: currentQuestionIndex,
+        gameInProgress: gameInProgress,
+        hasAnswered: hasAnswered,
+        submittedAnswer: submittedAnswer
+    };
+    localStorage.setItem('quizSession', JSON.stringify(sessionData));
+}
 
 function createYearInput(hasAnswered, submittedAnswer) {
     const container = document.createElement('div');
@@ -174,13 +182,48 @@ function stopTimer() {
     timerBar.style.width = currentWidth;
 }
 
+function submitAnswer(choice) {
+    if (!hasAnswered) {
+        socket.emit('submit-answer', choice);
+    }
+}
+
+// Check for existing session and reconnect
+window.onload = function() {
+    const savedSession = localStorage.getItem('quizSession');
+    if (savedSession) {
+        try {
+            const sessionData = JSON.parse(savedSession);
+            if (sessionData.name && sessionData.sessionId) {
+                playerName = sessionData.name;
+                sessionId = sessionData.sessionId;
+                totalScore = sessionData.score || 0;
+                currentQuestionIndex = sessionData.currentQuestionIndex;
+                gameInProgress = sessionData.gameInProgress;
+                
+                document.getElementById('gameScreen').style.display = 'block';
+                socket.emit('reconnect-player', sessionData);
+            } else {
+                redirectToIndex();
+            }
+        } catch (e) {
+            redirectToIndex();
+        }
+    } else {
+        redirectToIndex();
+    }
+};
+
 socket.on('player-welcome', (data) => {
     playerName = data.name;
     sessionId = data.sessionId;
     totalScore = data.score || 0;
     hasAnswered = data.hasAnswered || false;
     submittedAnswer = data.submittedAnswer || null;
+    gameInProgress = data.gameInProgress;
+    currentQuestionIndex = data.currentQuestionIndex;
     
+    updateSessionStorage();
     document.getElementById('gameScreen').style.display = 'block';
 });
 
@@ -189,6 +232,7 @@ socket.on('game-state', (state) => {
     totalScore = state.score;
     hasAnswered = state.hasAnswered;
     submittedAnswer = state.answer;
+    gameInProgress = true;
 
     document.getElementById('gameScreen').style.display = 'block';
     
@@ -197,6 +241,7 @@ socket.on('game-state', (state) => {
         `Fråga ${state.questionNumber} av ${state.totalQuestions}`;
     
     updateChoicesDisplay(state.choices, hasAnswered, submittedAnswer, state.questionType);
+    updateSessionStorage();
 
     if (state.timerState) {
         updateTimerBar(state.timerState.timeLeft, state.timerState.totalTime);
@@ -229,36 +274,6 @@ socket.on('timer-end', () => {
     results.style.display = 'block';
 });
 
-socket.on('connection-error', function(error) {
-    localStorage.removeItem('quizSession');
-    window.location.href = `/index.html?error=${encodeURIComponent(error)}`;
-});
-
-socket.on('answer-error', (error) => {
-    hasAnswered = true;
-    document.querySelectorAll('.choice-button, #yearInput, button').forEach(btn => {
-        btn.disabled = true;
-    });
-});
-
-socket.on('answer-confirmed', (data) => {
-    hasAnswered = true;
-    submittedAnswer = data.answer;
-    document.querySelectorAll('.choice-button, #yearInput, button').forEach(btn => {
-        btn.disabled = true;
-    });
-    const yearInput = document.getElementById('yearInput');
-    if (yearInput) {
-        yearInput.value = data.answer;
-    }
-});
-
-function submitAnswer(choice) {
-    if (!hasAnswered) {
-        socket.emit('submit-answer', choice);
-    }
-}
-
 socket.on('new-question', (data) => {
     // Reset all state for new question
     currentQuestionIndex = data.questionNumber - 1;
@@ -272,24 +287,21 @@ socket.on('new-question', (data) => {
     document.getElementById('gameProgress').textContent = 
         `Fråga ${data.questionNumber} av ${data.totalQuestions}`;
     
-    // Clear previous content before updating
-    const choicesContainer = document.getElementById('choices');
-    if (choicesContainer) {
-        choicesContainer.innerHTML = '';
-        // Reset any custom styles that might have been applied
-        choicesContainer.style.cssText = `
-            display: grid;
-            gap: 10px;
-            max-width: 400px;
-            margin: 20px auto;
-            padding: 20px;
-        `;
-    }
-    
     updateChoicesDisplay(data.choices, hasAnswered, submittedAnswer, data.questionType);
-    
-    // Remove any winner classes from body
-    document.body.classList.remove('gold-winner', 'silver-winner', 'bronze-winner');
+    updateSessionStorage();
+});
+
+socket.on('answer-confirmed', (data) => {
+    hasAnswered = true;
+    submittedAnswer = data.answer;
+    document.querySelectorAll('.choice-button, #yearInput, button').forEach(btn => {
+        btn.disabled = true;
+    });
+    const yearInput = document.getElementById('yearInput');
+    if (yearInput) {
+        yearInput.value = data.answer;
+    }
+    updateSessionStorage();
 });
 
 socket.on('answer-revealed', (data) => {
@@ -301,10 +313,14 @@ socket.on('answer-revealed', (data) => {
     const playerResult = data.results.find(result => result.playerName === playerName);
     if (playerResult) {
         totalScore = playerResult.totalScore;
+        updateSessionStorage();
     }
 });
 
 socket.on('game-over', (players) => {
+    gameInProgress = false;
+    updateSessionStorage();
+    
     const sortedPlayers = players.sort((a, b) => b.score - a.score);
     const currentPlayerIndex = sortedPlayers.findIndex(p => p.name === playerName);
     
@@ -355,10 +371,27 @@ socket.on('game-over', (players) => {
     
     gameScreen.innerHTML = '';
     gameScreen.appendChild(finalScoresDiv);
-    
-    localStorage.removeItem('quizSession');
+});
+
+socket.on('connection-error', function(error) {
+    redirectToIndex(error);
 });
 
 socket.on('disconnect', () => {
-    window.location.href = '/index.html';
+    // Keep session data on disconnect to allow reconnection
+    if (gameInProgress) {
+        document.getElementById('gameScreen').innerHTML = `
+            <div style="text-align: center; margin-top: 20px;">
+                <h3>Tappade anslutningen</h3>
+                <p>Försöker återansluta...</p>
+            </div>
+        `;
+        
+        // Attempt to reconnect
+        setTimeout(() => {
+            window.location.reload();
+        }, 2000);
+    } else {
+        redirectToIndex();
+    }
 });
