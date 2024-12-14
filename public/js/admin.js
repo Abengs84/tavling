@@ -86,8 +86,21 @@ function stopTimer() {
 
 function updatePlayerList(players) {
     const playersList = document.getElementById('playersList');
+    // Clear the list first
     playersList.innerHTML = '';
+    
+    // Create a map of players by name to handle duplicates
+    const playerMap = new Map();
     players.forEach(player => {
+        // If player already exists, only update if this instance is connected
+        const existing = playerMap.get(player.name);
+        if (!existing || (!existing.connected && player.connected)) {
+            playerMap.set(player.name, player);
+        }
+    });
+
+    // Add unique players to the list
+    playerMap.forEach(player => {
         const li = document.createElement('li');
         li.id = `player-${player.id}`;
         const disconnectedClass = player.connected === false ? 'disconnected' : '';
@@ -317,18 +330,27 @@ socket.on('current-players', (players) => {
 });
 
 socket.on('player-joined', (player) => {
-    const existingLi = document.getElementById(`player-${player.id}`);
-    if (!existingLi) {
-        const li = document.createElement('li');
-        li.id = `player-${player.id}`;
-        li.innerHTML = `${player.name} <span class="player-score">${player.score || 0} poäng</span>`;
-        document.getElementById('playersList').appendChild(li);
-    }
+    // Remove any existing entries for this player name
+    const existingElements = document.querySelectorAll(`li[id^="player-"]`);
+    existingElements.forEach(el => {
+        if (el.textContent.includes(player.name)) {
+            el.remove();
+        }
+    });
+
+    // Add the new player entry
+    const li = document.createElement('li');
+    li.id = `player-${player.id}`;
+    li.innerHTML = `${player.name} <span class="player-score">${player.score || 0} poäng</span>`;
+    document.getElementById('playersList').appendChild(li);
 });
 
 socket.on('player-left', (player) => {
+    // Remove the specific player entry
     const li = document.getElementById(`player-${player.id}`);
-    if (li) li.remove();
+    if (li) {
+        li.remove();
+    }
 });
 
 socket.on('scores-updated', (players) => {

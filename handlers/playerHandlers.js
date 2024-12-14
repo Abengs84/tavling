@@ -3,6 +3,35 @@ const { validatePlayerName, loadQuestions } = require('../utils/game');
 const { broadcastScores, emitPlayerCount } = require('../utils/broadcast');
 const { startTimer } = require('../utils/timer');
 
+function cleanupPlayerSession(playerName) {
+    // Remove from playerSessions
+    gameState.playerSessions.delete(playerName);
+
+    // Remove from players and notify admin
+    for (const [socketId, player] of gameState.players.entries()) {
+        if (player.name === playerName) {
+            gameState.players.delete(socketId);
+            // Notify admin about player removal
+            if (gameState.adminSocket) {
+                gameState.adminSocket.emit('player-left', { id: socketId });
+            }
+            break;
+        }
+    }
+
+    // Remove from disconnectedPlayers
+    for (const [socketId, player] of gameState.disconnectedPlayers.entries()) {
+        if (player.name === playerName) {
+            gameState.disconnectedPlayers.delete(socketId);
+            // Notify admin about player removal
+            if (gameState.adminSocket) {
+                gameState.adminSocket.emit('player-left', { id: socketId });
+            }
+            break;
+        }
+    }
+}
+
 function handlePlayerJoin(io, socket, playerName) {
     const validation = validatePlayerName(playerName);
     if (!validation.valid) {
@@ -10,41 +39,89 @@ function handlePlayerJoin(io, socket, playerName) {
         return;
     }
 
-    // Check if player is reconnecting
+    // Check for existing session
     const existingSession = gameState.playerSessions.get(playerName);
     const isDisconnected = Array.from(gameState.disconnectedPlayers.values()).some(p => p.name === playerName);
     
-    if (existingSession || isDisconnected) {
-        socket.emit('join-error', 'Du är redan med i spelet. Använd återanslut om du tappat anslutningen.');
+    // Check if this is the same player trying to reconnect
+    const savedSession = socket.handshake.auth.session;
+    const isReconnecting = savedSession && savedSession.name === playerName;
+    
+    if ((existingSession || isDisconnected) && !isReconnecting) {
+        // Different player trying to use the same name
+        socket.emit('join-error', 'Detta namn är redan taget');
         return;
     }
 
-    // Create new player session
-    gameState.players.set(socket.id, {
-        name: playerName,
-        score: 0
-    });
+    // Clean up any existing session for this player
+    cleanupPlayerSession(playerName);
 
-    gameState.playerSessions.set(playerName, {
-        sessionId: socket.id,
-        score: 0,
-        currentQuestionIndex: gameState.currentQuestionIndex,
-        hasAnswered: false
-    });
+    // Handle reconnection
+    if (isReconnecting) {
+        let score = 0;
+        let hasAnswered = false;
+
+        // Check if player was disconnected and restore their score
+        Array.from(gameState.disconnectedPlayers.entries()).forEach(([id, player]) => {
+            if (player.name === playerName) {
+                score = player.score;
+                gameState.disconnectedPlayers.delete(id);
+            }
+        });
+
+        // Check if player has answered current question
+        if (gameState.currentQuestionIndex >= 0) {
+            const currentAnswers = gameState.playerAnswers.get(gameState.currentQuestionIndex);
+            hasAnswered = currentAnswers?.has(playerName) || false;
+        }
+
+        // Update session
+        gameState.playerSessions.set(playerName, {
+            sessionId: socket.id,
+            score: score,
+            currentQuestionIndex: gameState.currentQuestionIndex,
+            hasAnswered: hasAnswered
+        });
+
+        // Update players map
+        gameState.players.set(socket.id, {
+            name: playerName,
+            score: score
+        });
+    } else {
+        // Create new player session
+        gameState.players.set(socket.id, {
+            name: playerName,
+            score: 0
+        });
+
+        gameState.playerSessions.set(playerName, {
+            sessionId: socket.id,
+            score: 0,
+            currentQuestionIndex: gameState.currentQuestionIndex,
+            hasAnswered: false
+        });
+    }
+
+    // Store session info in socket for future reference
+    socket.handshake.auth.session = {
+        name: playerName,
+        sessionId: socket.id
+    };
 
     socket.join('players');
     socket.emit('player-welcome', {
         name: playerName,
         gameInProgress: gameState.isGameStarted,
         sessionId: socket.id,
-        score: 0,
+        score: gameState.players.get(socket.id).score,
         currentQuestionIndex: gameState.currentQuestionIndex
     });
 
     io.to('admin').emit('player-joined', {
         id: socket.id,
         name: playerName,
-        score: 0
+        score: gameState.players.get(socket.id).score
     });
 
     emitPlayerCount(io);
