@@ -7,14 +7,10 @@ function cleanupPlayerSession(playerName) {
     // Remove from playerSessions
     gameState.playerSessions.delete(playerName);
 
-    // Remove from players and notify admin
+    // Remove from players
     for (const [socketId, player] of gameState.players.entries()) {
         if (player.name === playerName) {
             gameState.players.delete(socketId);
-            // Notify admin about player removal
-            if (gameState.adminSocket) {
-                gameState.adminSocket.emit('player-left', { id: socketId });
-            }
             break;
         }
     }
@@ -23,13 +19,47 @@ function cleanupPlayerSession(playerName) {
     for (const [socketId, player] of gameState.disconnectedPlayers.entries()) {
         if (player.name === playerName) {
             gameState.disconnectedPlayers.delete(socketId);
-            // Notify admin about player removal
-            if (gameState.adminSocket) {
-                gameState.adminSocket.emit('player-left', { id: socketId });
-            }
             break;
         }
     }
+}
+
+function getCurrentGameState(playerName) {
+    // If game is over, return final results
+    if (!gameState.isGameStarted && gameState.finalResults) {
+        return {
+            gameOver: true,
+            finalResults: gameState.finalResults
+        };
+    }
+
+    // If game hasn't started or no current question
+    if (!gameState.isGameStarted || !gameState.currentQuestion) {
+        return null;
+    }
+
+    const session = gameState.playerSessions.get(playerName);
+    const answers = gameState.playerAnswers.get(gameState.currentQuestionIndex);
+    const hasAnswered = answers?.has(playerName) || false;
+    const answer = hasAnswered ? answers.get(playerName).answer : null;
+
+    // Update session with current state
+    if (session) {
+        session.hasAnswered = hasAnswered;
+        session.currentQuestionIndex = gameState.currentQuestionIndex;
+    }
+
+    return {
+        currentQuestionIndex: gameState.currentQuestionIndex,
+        questionNumber: gameState.currentQuestionIndex + 1,
+        totalQuestions: gameState.questions.length,
+        questionText: gameState.currentQuestion.question,
+        choices: gameState.currentQuestion.type === 'year' ? [] : gameState.currentQuestion.choices,
+        questionType: gameState.currentQuestion.type || 'multiple-choice',
+        hasAnswered: hasAnswered,
+        answer: answer,
+        score: session?.score || 0
+    };
 }
 
 function handlePlayerJoin(io, socket, playerName) {
@@ -110,13 +140,19 @@ function handlePlayerJoin(io, socket, playerName) {
     };
 
     socket.join('players');
-    socket.emit('player-welcome', {
-        name: playerName,
-        gameInProgress: gameState.isGameStarted,
-        sessionId: socket.id,
-        score: gameState.players.get(socket.id).score,
-        currentQuestionIndex: gameState.currentQuestionIndex
-    });
+
+    // If game is over, send final results immediately
+    if (!gameState.isGameStarted && gameState.finalResults) {
+        socket.emit('game-over', gameState.finalResults);
+    } else {
+        socket.emit('player-welcome', {
+            name: playerName,
+            gameInProgress: gameState.isGameStarted,
+            sessionId: socket.id,
+            score: gameState.players.get(socket.id).score,
+            currentQuestionIndex: gameState.currentQuestionIndex
+        });
+    }
 
     io.to('admin').emit('player-joined', {
         id: socket.id,
@@ -150,6 +186,7 @@ function handleStartGame(io, socket) {
     gameState.isGameStarted = true;
     gameState.playerAnswers.clear();
     gameState.yearProximities.clear();
+    gameState.finalResults = null; // Clear final results when starting new game
     
     broadcastScores(io);
     io.emit('game-started');
@@ -191,35 +228,6 @@ function startNewQuestion(io) {
     io.to('spectators').emit('new-question', questionData);
 
     startTimer(io);
-}
-
-function getCurrentGameState(playerName) {
-    if (!gameState.isGameStarted || !gameState.currentQuestion) {
-        return null;
-    }
-
-    const session = gameState.playerSessions.get(playerName);
-    const answers = gameState.playerAnswers.get(gameState.currentQuestionIndex);
-    const hasAnswered = answers?.has(playerName) || false;
-    const answer = hasAnswered ? answers.get(playerName).answer : null;
-
-    // Update session with current state
-    if (session) {
-        session.hasAnswered = hasAnswered;
-        session.currentQuestionIndex = gameState.currentQuestionIndex;
-    }
-
-    return {
-        currentQuestionIndex: gameState.currentQuestionIndex,
-        questionNumber: gameState.currentQuestionIndex + 1,
-        totalQuestions: gameState.questions.length,
-        questionText: gameState.currentQuestion.question,
-        choices: gameState.currentQuestion.type === 'year' ? [] : gameState.currentQuestion.choices,
-        questionType: gameState.currentQuestion.type || 'multiple-choice',
-        hasAnswered: hasAnswered,
-        answer: answer,
-        score: session?.score || 0
-    };
 }
 
 module.exports = {

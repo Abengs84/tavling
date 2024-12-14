@@ -11,7 +11,8 @@ const gameState = {
     timerInterval: null,
     timerStartTime: null,  // Track when timer started
     timeLeft: null,  // Will be set from config
-    yearProximities: new Map() // Track year proximities for tiebreaker
+    yearProximities: new Map(), // Track year proximities for tiebreaker
+    finalResults: null // Store final results for reconnecting players
 };
 
 module.exports = gameState;

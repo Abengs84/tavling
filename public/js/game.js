@@ -9,25 +9,31 @@ let gameInProgress = false;
 
 const TOP_PLAYERS_TO_SHOW = 5;
 
-function redirectToIndex(error = '') {
-    localStorage.removeItem('quizSession');
-    window.location.href = error ? 
-        `/index.html?error=${encodeURIComponent(error)}` : 
-        '/index.html';
-}
-
-function updateSessionStorage() {
-    const sessionData = {
-        name: playerName,
-        sessionId: sessionId,
-        score: totalScore,
-        currentQuestionIndex: currentQuestionIndex,
-        gameInProgress: gameInProgress,
-        hasAnswered: hasAnswered,
-        submittedAnswer: submittedAnswer
-    };
-    localStorage.setItem('quizSession', JSON.stringify(sessionData));
-}
+// Check for existing session and reconnect
+window.onload = function() {
+    const savedSession = localStorage.getItem('quizSession');
+    if (savedSession) {
+        try {
+            const sessionData = JSON.parse(savedSession);
+            if (sessionData.name && sessionData.sessionId) {
+                playerName = sessionData.name;
+                sessionId = sessionData.sessionId;
+                totalScore = sessionData.score || 0;
+                currentQuestionIndex = sessionData.currentQuestionIndex;
+                gameInProgress = sessionData.gameInProgress;
+                
+                document.getElementById('gameScreen').style.display = 'block';
+                socket.emit('reconnect-player', sessionData);
+            } else {
+                window.location.href = '/index.html';
+            }
+        } catch (e) {
+            window.location.href = '/index.html';
+        }
+    } else {
+        window.location.href = '/index.html';
+    }
+};
 
 function createYearInput(hasAnswered, submittedAnswer) {
     const container = document.createElement('div');
@@ -182,37 +188,24 @@ function stopTimer() {
     timerBar.style.width = currentWidth;
 }
 
+function updateSessionStorage() {
+    const sessionData = {
+        name: playerName,
+        sessionId: sessionId,
+        score: totalScore,
+        currentQuestionIndex: currentQuestionIndex,
+        gameInProgress: gameInProgress,
+        hasAnswered: hasAnswered,
+        submittedAnswer: submittedAnswer
+    };
+    localStorage.setItem('quizSession', JSON.stringify(sessionData));
+}
+
 function submitAnswer(choice) {
     if (!hasAnswered) {
         socket.emit('submit-answer', choice);
     }
 }
-
-// Check for existing session and reconnect
-window.onload = function() {
-    const savedSession = localStorage.getItem('quizSession');
-    if (savedSession) {
-        try {
-            const sessionData = JSON.parse(savedSession);
-            if (sessionData.name && sessionData.sessionId) {
-                playerName = sessionData.name;
-                sessionId = sessionData.sessionId;
-                totalScore = sessionData.score || 0;
-                currentQuestionIndex = sessionData.currentQuestionIndex;
-                gameInProgress = sessionData.gameInProgress;
-                
-                document.getElementById('gameScreen').style.display = 'block';
-                socket.emit('reconnect-player', sessionData);
-            } else {
-                redirectToIndex();
-            }
-        } catch (e) {
-            redirectToIndex();
-        }
-    } else {
-        redirectToIndex();
-    }
-};
 
 socket.on('player-welcome', (data) => {
     playerName = data.name;
@@ -228,6 +221,12 @@ socket.on('player-welcome', (data) => {
 });
 
 socket.on('game-state', (state) => {
+    // Handle game-over state
+    if (state.gameOver && state.finalResults) {
+        showFinalResults(state.finalResults);
+        return;
+    }
+
     currentQuestionIndex = state.currentQuestionIndex;
     totalScore = state.score;
     hasAnswered = state.hasAnswered;
@@ -246,6 +245,22 @@ socket.on('game-state', (state) => {
     if (state.timerState) {
         updateTimerBar(state.timerState.timeLeft, state.timerState.totalTime);
     }
+});
+
+socket.on('new-question', (data) => {
+    currentQuestionIndex = data.questionNumber - 1;
+    hasAnswered = false;
+    submittedAnswer = null;
+    
+    document.getElementById('gameScreen').style.display = 'block';
+    document.getElementById('questionText').textContent = data.questionText;
+    document.getElementById('results').innerHTML = '';
+    document.getElementById('results').style.display = 'none';
+    document.getElementById('gameProgress').textContent = 
+        `Fråga ${data.questionNumber} av ${data.totalQuestions}`;
+    
+    updateChoicesDisplay(data.choices, hasAnswered, submittedAnswer, data.questionType);
+    updateSessionStorage();
 });
 
 socket.on('timer-start', (timeLeft) => {
@@ -272,23 +287,6 @@ socket.on('timer-end', () => {
         </div>
     `;
     results.style.display = 'block';
-});
-
-socket.on('new-question', (data) => {
-    // Reset all state for new question
-    currentQuestionIndex = data.questionNumber - 1;
-    hasAnswered = false; // Reset answer state
-    submittedAnswer = null; // Clear previous answer
-    
-    document.getElementById('gameScreen').style.display = 'block';
-    document.getElementById('questionText').textContent = data.questionText;
-    document.getElementById('results').innerHTML = '';
-    document.getElementById('results').style.display = 'none';
-    document.getElementById('gameProgress').textContent = 
-        `Fråga ${data.questionNumber} av ${data.totalQuestions}`;
-    
-    updateChoicesDisplay(data.choices, hasAnswered, submittedAnswer, data.questionType);
-    updateSessionStorage();
 });
 
 socket.on('answer-confirmed', (data) => {
@@ -318,9 +316,11 @@ socket.on('answer-revealed', (data) => {
 });
 
 socket.on('game-over', (players) => {
+    showFinalResults(players);
+});
+
+function showFinalResults(players) {
     gameInProgress = false;
-    updateSessionStorage();
-    
     const sortedPlayers = players.sort((a, b) => b.score - a.score);
     const currentPlayerIndex = sortedPlayers.findIndex(p => p.name === playerName);
     
@@ -371,14 +371,20 @@ socket.on('game-over', (players) => {
     
     gameScreen.innerHTML = '';
     gameScreen.appendChild(finalScoresDiv);
-});
-
-socket.on('connection-error', function(error) {
-    redirectToIndex(error);
-});
+    
+    // Update session storage with game-over state
+    const sessionData = {
+        name: playerName,
+        sessionId: sessionId,
+        score: totalScore,
+        gameOver: true,
+        finalResults: players
+    };
+    localStorage.setItem('quizSession', JSON.stringify(sessionData));
+}
 
 socket.on('disconnect', () => {
-    // Keep session data on disconnect to allow reconnection
+    // Only reload if game is still in progress
     if (gameInProgress) {
         document.getElementById('gameScreen').innerHTML = `
             <div style="text-align: center; margin-top: 20px;">
@@ -391,7 +397,5 @@ socket.on('disconnect', () => {
         setTimeout(() => {
             window.location.reload();
         }, 2000);
-    } else {
-        redirectToIndex();
     }
 });

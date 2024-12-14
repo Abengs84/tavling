@@ -61,6 +61,13 @@ io.on('connection', (socket) => {
 
     socket.on('admin-connect', () => {
         if (authenticatedAdmins.has(socket.id)) {
+            // If game is over and we have final results, send them
+            if (!gameState.isGameStarted && gameState.finalResults) {
+                socket.emit('game-over', gameState.finalResults);
+                return;
+            }
+
+            // If game is in progress, send current state
             if (gameState.isGameStarted) {
                 // Send current game state to admin
                 socket.emit('game-state', {
@@ -138,10 +145,13 @@ io.on('connection', (socket) => {
                 connected: !gameState.disconnectedPlayers.has(player.name)
             }));
 
+            // Store final results
+            gameState.finalResults = finalPlayers;
+
             // Send game-over event to all clients
             io.emit('game-over', finalPlayers);
 
-            // Reset game state
+            // Reset game state but keep final results
             gameState.isGameStarted = false;
             gameState.playerAnswers.clear();
             gameState.yearProximities.clear();
@@ -219,12 +229,26 @@ io.on('connection', (socket) => {
             });
             
             socket.join('players');
-            socket.emit('player-welcome', {
-                name: sessionData.name,
-                gameInProgress: gameState.isGameStarted,
-                sessionId: socket.id,
-                score: score
-            });
+
+            // If game is over, send final results immediately
+            if (!gameState.isGameStarted && gameState.finalResults) {
+                socket.emit('game-over', gameState.finalResults);
+            } else {
+                socket.emit('player-welcome', {
+                    name: sessionData.name,
+                    gameInProgress: gameState.isGameStarted,
+                    sessionId: socket.id,
+                    score: score
+                });
+
+                // Send current game state if game is in progress
+                if (gameState.isGameStarted && gameState.currentQuestion) {
+                    const currentState = getCurrentGameState(sessionData.name);
+                    if (currentState) {
+                        socket.emit('game-state', currentState);
+                    }
+                }
+            }
 
             io.to('admin').emit('player-joined', {
                 id: socket.id,
@@ -234,14 +258,6 @@ io.on('connection', (socket) => {
 
             emitPlayerCount(io);
             broadcastScores(io);
-
-            // Send current game state if game is in progress
-            if (gameState.isGameStarted && gameState.currentQuestion) {
-                const currentState = getCurrentGameState(sessionData.name);
-                if (currentState) {
-                    socket.emit('game-state', currentState);
-                }
-            }
         } else {
             socket.emit('connection-error', 'Session expired. Please enter your name again.');
         }
